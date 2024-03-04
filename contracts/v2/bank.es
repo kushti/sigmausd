@@ -14,11 +14,9 @@
       // Got via http://tomeko.net/online_tools/hex_to_base64.php
       val updateNFT = fromBase64("I5wXC36C+U5rBUFvFLiipX4L//DjyT9Ku80WC2pbJxo=")
 
-      val coolingOffHeight = 460000
-
       val minStorageRent = 10000000L
       val minReserveRatioPercent = 400L // percent
-      val defaultMaxReserveRatioPercent = 800L // percent
+      val maxReserveRatioPercent = 800L // percent
       val INF = 1000000000L
       val LongMax = 9223372036854775807L
       val rcDefaultPrice = 1000000L
@@ -90,7 +88,6 @@
         val bcReserveNeededOut = scCircOut * rate
         val bcReserveNeededIn = scCircIn * rate
         val liabilitiesIn = max(min(bcReserveIn, bcReserveNeededIn), 0)
-        val maxReserveRatioPercent = if (HEIGHT > coolingOffHeight) defaultMaxReserveRatioPercent else INF
 
         val reserveRatioPercentOut = if (bcReserveNeededOut == 0) maxReserveRatioPercent else bcReserveOut * 100 / bcReserveNeededOut
 
