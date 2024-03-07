@@ -1,4 +1,7 @@
 {
+      // diff from V1:
+      //  * no cooling off period
+
       // this box
       // R4: Number of stable-coins in circulation
       // R5: Number of reserve-coins in circulation
