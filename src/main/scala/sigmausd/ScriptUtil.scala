@@ -1,11 +1,11 @@
 package sigmausd
 
-import kiosk.ergo._
+import org.ergoplatform.kiosk.ergo._
 import org.ergoplatform.{ErgoAddress, ErgoAddressEncoder}
 import sigmastate.Values.ErgoTree
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
-import special.sigma.GroupElement
+import sigma.GroupElement
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -31,7 +31,7 @@ object ScriptUtil {
   def compile(env: Map[String, KioskType[_]], ergoScript: String): ErgoTree = {
     import sigmastate.lang.Terms._
     implicit val irContext = new CompiletimeIRContext
-    compiler.compile(env.mapValues(_.value), ergoScript).asSigmaProp
+    compiler.compile(env.view.mapValues(_.value).toMap, ergoScript).buildTree.asBoolValue.asSigmaProp
   }
 
   implicit def mapToBetterMMap(map: MMap[String, KioskType[_]]) = BetterMMap(map)
