@@ -3,8 +3,8 @@
   // Registers empty
   //
   // ballot boxes (Inputs)
-  // R4 the pub key of voter [GroupElement] (not used here)
-  // R5 dummy int due to AOTC non-lazy evaluation (from the line marked **** below)
+  // R4 the pub key of voter [GroupElement] (not used here fo type is [Long])
+  // R5 dummy [Long] due to AOTC non-lazy evaluation (from the line marked **** below)
   // R6 the box id of this box [Coll[Byte]]
   // R7 the value voted for [Coll[Byte]]
 

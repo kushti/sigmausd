@@ -6,7 +6,7 @@ import org.ergoplatform.kiosk.ErgoUtil
 import org.ergoplatform.kiosk.appkit.MockErgoClient
 import org.ergoplatform.kiosk.encoding.ScalaErgoConverters
 import org.ergoplatform.kiosk.encoding.ScalaErgoConverters.stringToGroupElement
-import org.ergoplatform.kiosk.ergo.{DhtData, KioskBox, KioskCollByte, KioskGroupElement}
+import org.ergoplatform.kiosk.ergo.{DhtData, KioskBox, KioskCollByte, KioskGroupElement, KioskLong}
 import org.ergoplatform.kiosk.tx.TxUtil
 import org.ergoplatform.sdk.ErgoToken
 import scorex.crypto.hash.Blake2b256
@@ -42,6 +42,9 @@ class BankUpdateSpec extends MockErgoClient with Common {
         val ballot2Box = KioskBox(ballotAddress, value = 200000000, registers = Array(r4voter2), tokens = Array((ballotTokenId, 1L)))
       }
 
+      val r4Dummy = KioskLong(666L) // dummy data point
+      val r5Dummy = KioskLong(777L) //see update.es
+
       // value to vote for; hash of new pool box script
       val valueVotedFor = KioskCollByte(
         Blake2b256.hash(
@@ -69,6 +72,7 @@ class BankUpdateSpec extends MockErgoClient with Common {
       val ballot0InputToCreate = Voters.ballot0Box.copy(
         registers = Array(
           Voters.ballot0Box.registers(0),
+          r5Dummy,
           KioskCollByte(updateBox.getId.getBytes),
           valueVotedFor
         )
@@ -77,6 +81,7 @@ class BankUpdateSpec extends MockErgoClient with Common {
       val ballot1InputToCreate = Voters.ballot1Box.copy(
         registers = Array(
           Voters.ballot1Box.registers(0),
+          r5Dummy,
           KioskCollByte(updateBox.getId.getBytes),
           valueVotedFor
         )
@@ -85,6 +90,7 @@ class BankUpdateSpec extends MockErgoClient with Common {
       val ballot2InputToCreate = Voters.ballot2Box.copy(
         registers = Array(
           Voters.ballot2Box.registers(0),
+          r5Dummy,
           KioskCollByte(updateBox.getId.getBytes),
           valueVotedFor
         )
@@ -129,7 +135,8 @@ class BankUpdateSpec extends MockErgoClient with Common {
           .newTxBuilder()
           .outBoxBuilder
           .value(fakeNanoErgs)
-          .tokens(new ErgoToken(bankNFT, 1), new ErgoToken(sigmaUSD, fakeNanoErgs))
+          .registers(r4Dummy.getErgoValue, r5Dummy.getErgoValue)
+          .tokens(new ErgoToken(sigmaUSD, fakeNanoErgs), new ErgoToken(sigmaRSV, fakeNanoErgs * 4), new ErgoToken(bankNFT, 1))
           .contract(ctx.compileContract(ConstantsBuilder.empty(), bankV1Script))
           .build()
           .convertToInputWith(fakeTxId4, fakeIndex)
@@ -144,8 +151,8 @@ class BankUpdateSpec extends MockErgoClient with Common {
       val validBankOutBox = KioskBox(
         bankV1Address,
         fakeNanoErgs,
-        registers = Array(),
-        tokens = Array((bankNFT, 1), (sigmaUSD, fakeNanoErgs))
+        registers = Array(r4Dummy, r5Dummy),
+        tokens = Array((sigmaUSD, fakeNanoErgs), (sigmaRSV, fakeNanoErgs * 4), (bankNFT, 1))
       )
 
       val validBallot0Output = Voters.ballot0Box.copy(
