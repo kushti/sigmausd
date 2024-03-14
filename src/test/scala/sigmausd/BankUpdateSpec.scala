@@ -3,15 +3,17 @@ package sigmausd
 import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder}
 import sigmausd.SigmaUSDBootstrapping._
 import org.ergoplatform.kiosk.ErgoUtil
-import org.ergoplatform.kiosk.appkit.MockErgoClient
+import org.ergoplatform.kiosk.appkit.HttpClientTesting.createMockedErgoClient
 import org.ergoplatform.kiosk.encoding.ScalaErgoConverters
 import org.ergoplatform.kiosk.encoding.ScalaErgoConverters.stringToGroupElement
 import org.ergoplatform.kiosk.ergo.{DhtData, KioskBox, KioskCollByte, KioskGroupElement, KioskLong}
 import org.ergoplatform.kiosk.tx.TxUtil
 import org.ergoplatform.sdk.ErgoToken
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.propspec.AnyPropSpec
 import scorex.crypto.hash.Blake2b256
 
-class BankUpdateSpec extends MockErgoClient with Common {
+class BankUpdateSpec extends AnyPropSpec with Matchers with Common {
   import TokenIds.Mainnet._
 
   override lazy val minStorageRent = 10000000L
@@ -19,8 +21,8 @@ class BankUpdateSpec extends MockErgoClient with Common {
   val fakeNanoErgs = 10000000000000L
   val fee = 1500000
 
-  property("Update should work") { ergo =>
-    ergo.client.execute { implicit ctx: BlockchainContext =>
+  property("Update should work") {
+    createMockedErgoClient().execute { implicit ctx: BlockchainContext =>
       object Voters {
         // define voters
         val addresses = Seq(
@@ -67,7 +69,7 @@ class BankUpdateSpec extends MockErgoClient with Common {
         .tokens(new ErgoToken(updateNFT, 1))
         .contract(ctx.newContract(ScalaErgoConverters.getAddressFromString(updateAddress).script))
         .build()
-        .convertToInputWith(fakeTxId3, fakeIndex)
+        .convertToInputWith(fakeTxId2, fakeIndex)
 
       val ballot0InputToCreate = Voters.ballot0Box.copy(
         registers = Array(
@@ -98,7 +100,7 @@ class BankUpdateSpec extends MockErgoClient with Common {
 
       // create ballots
       val ballot0 = TxUtil.createTx(
-        inputBoxes = Array(Voters.ballot0Box.toInBox(fakeTxId5, 0), fundingBox),
+        inputBoxes = Array(Voters.ballot0Box.toInBox(fakeTxId3, 0), fundingBox),
         dataInputs = Array(),
         boxesToCreate = Array(ballot0InputToCreate),
         fee,
@@ -109,7 +111,7 @@ class BankUpdateSpec extends MockErgoClient with Common {
       ).getOutputsToSpend.get(0)
 
       val ballot1 = TxUtil.createTx(
-        inputBoxes = Array(Voters.ballot1Box.toInBox(fakeTxId6, 0), fundingBox),
+        inputBoxes = Array(Voters.ballot1Box.toInBox(fakeTxId4, 0), fundingBox),
         dataInputs = Array(),
         boxesToCreate = Array(ballot1InputToCreate),
         fee,
@@ -120,7 +122,7 @@ class BankUpdateSpec extends MockErgoClient with Common {
       ).getOutputsToSpend.get(0)
 
       val ballot2 = TxUtil.createTx(
-        inputBoxes = Array(Voters.ballot2Box.toInBox(fakeTxId7, 0), fundingBox),
+        inputBoxes = Array(Voters.ballot2Box.toInBox(fakeTxId5, 0), fundingBox),
         dataInputs = Array(),
         boxesToCreate = Array(ballot2InputToCreate),
         fee,
@@ -188,8 +190,8 @@ class BankUpdateSpec extends MockErgoClient with Common {
     }
   }
 
-  property("Update with less than 3 votes should fail") { ergo =>
-    ergo.client.execute { implicit ctx: BlockchainContext =>
+  property("Update with less than 3 votes should fail") {
+    createMockedErgoClient().execute { implicit ctx: BlockchainContext =>
       object Voters {
         // define voters
         val addresses = Seq(
