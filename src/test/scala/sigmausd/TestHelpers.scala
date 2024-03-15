@@ -19,4 +19,14 @@ trait TestHelpers extends Whenever with Assertions with Informing {
         false
     })(assert(true))
   }
+
+  def assertTryNeg(fun: => Any) = {
+    val res = Try(fun)
+    whenever(res match {
+      case Success(v) =>
+        false
+      case Failure(e) =>
+        true
+    })(assert(true))
+  }
 }

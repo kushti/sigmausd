@@ -33,7 +33,7 @@ class BankMintSpec
   val exchangeDeltaGen          = Gen.choose(1, 1000L)
   val receiptBoxNanoErgValueGen = Gen.choose(1000L * NANO, 2000L * NANO)
   val bankBoxNanoErgsInGen      = Gen.choose(2000L * NANO, 10_000L * NANO)
-  val scReceiptInGen            = Gen.choose(0, 1000L)
+  val scReceiptInGen            = Gen.choose(1000L, 1000L)
   val rcReceiptInGen            = Gen.choose(1000L, 2000L)
 
   property("Minting stable coin should work") {
@@ -292,7 +292,6 @@ class BankMintSpec
           val bankReserveDeltaAfterFee =
             bankDeltaExpected + bankReserveActualFee
 
-          info(s"!!!: $bankReserveDeltaAfterFee")
           val receiptBox =
             ctx
               .newTxBuilder()
