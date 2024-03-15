@@ -1,0 +1,4 @@
+Deployment of SigmaUSD v3(v2 here):
+
+R6 register should be set to any Int value (e.g. 0)
+R7 should be set to (0, 0)
