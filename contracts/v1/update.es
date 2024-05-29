@@ -3,20 +3,20 @@
   // Registers empty
   //
   // ballot boxes (Inputs)
-  // R4 the pub key of voter [GroupElement] (not used here)
-  // R5 dummy int due to AOTC non-lazy evaluation (from the line marked **** below)
+  // R4 the pub key of voter [GroupElement] (not used here, type is [Long])
+  // R5 dummy [Long] due to AOTC non-lazy evaluation (from the line marked **** below)
   // R6 the box id of this box [Coll[Byte]]
   // R7 the value voted for [Coll[Byte]]
 
   // Base-64 version of the stablecoin bank NFT 7d672d1def471720ca5782fd6473e47e796d9ac0c138d9911346f118b2f6d9d9
   // Issued in https://explorer.ergoplatform.com/en/transactions/134db72906d84ea8f6d5b4dc0bbfeaed880836f36dffc4bda8254071b519000a
   // Got via http://tomeko.net/online_tools/hex_to_base64.php
-  val bankNFT = fromBase64("fWctHe9HFyDKV4L9ZHPkfnltmsDBONmRE0bxGLL22dk=")
+  val bankNFT = fromBase64("$bankNFT")
 
   // Base-64 version of the ballot token ID f7995f212216fcf21854f56df7a9a0a9fc9b7ae4c0f1cc40f5b406371286a5e0
   // Issued in https://explorer.ergoplatform.com/en/transactions/744f7080e0373c754f9c8174989c1307e92f4a3937799f15628b1d434d70afb9
   // Got via http://tomeko.net/online_tools/hex_to_base64.php
-  val ballotTokenId = fromBase64("95lfISIW/PIYVPVt96mgqfybeuTA8cxA9bQGNxKGpeA=")
+  val ballotTokenId = fromBase64("$ballotTokenId")
 
   val minVotes = 3
 
