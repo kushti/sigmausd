@@ -4,7 +4,9 @@
 
       // diff from V1:
       //  * no cooling off period
-      //  * per-epoch minting limits are added for both SigUSD and SigRSV
+      //  * per-epoch minting limits are added for both SigUSD and SigRSV. For that, new register, R7, is used, to
+      //    store number of SigUSD and SigRSV tokens still allowed minted in the epoch (oracle update epoch). Also,
+      //    register R6 is used to store height of current oracle epoch start.
 
 
       // this box
@@ -42,7 +44,6 @@
         val receiptBox = OUTPUTS(1)
 
         val rate = rateBox.R4[Long].get / 100 // calculate nanoERG per US cent
-        val oracleUpdateHeight = rateBox.R5[Int].get
 
         val scCircIn = bankBoxIn.R4[Long].get
         val rcCircIn = bankBoxIn.R5[Long].get
@@ -76,7 +77,8 @@
         val rcCircDelta = if (rcExchange) circDelta else 0L
         val scCircDelta = if (rcExchange) 0L else circDelta
 
-        // v2 code below
+        // V2 code below
+        val oracleUpdateHeight = rateBox.R5[Int].get
         val limitFactor = 200 // 1 / 200, so 0.5% per oracle update
         val limitsReg = bankBoxIn.R7[(Long, Long)].get
         val limits = if (bankBoxIn.R6[Int].get != oracleUpdateHeight) {
