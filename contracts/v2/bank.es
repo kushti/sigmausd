@@ -1,13 +1,17 @@
 {
+      // SigmaUSD bank V2 contract.
+      // Ballot & update contracts are the same for V2.
+
       // diff from V1:
       //  * no cooling off period
+      //  * per-epoch minting limits are added for both SigUSD and SigRSV
 
 
       // this box
       // R4: Long : Number of stable-coins in circulation
       // R5: Long : Number of reserve-coins in circulation
       // R6: Int  : Last oracle update height (to have limits per cycle)
-      // R7: (Long, Long) : Remaining limit for SigUsd and SigRSV minting per oracle update
+      // R7: (Long, Long) : Remaining limit for SigUsd and SigRSV minting per oracle update (added in V2)
 
       val feePercent = 2 // in percent, so 2% fee
 
