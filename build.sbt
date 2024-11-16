@@ -32,11 +32,5 @@ libraryDependencies ++= Seq(
 //  "org.scalaj" %% "scalaj-http" % "2.3.0",
   "org.ergoplatform" %% "ergo-appkit" % "5.0.4",
   "org.ergoplatform" %% "kiosk" % "1.0.0",
-  "org.ergoplatform" %% "ergo-core" % "5.0.20-19-11ec4f3d-SNAPSHOT"
-//    .excludeAll(
-//      ExclusionRule(organization = "com.typesafe.akka"),
-//      ExclusionRule(organization = "ch.qos.logback"),
-//      ExclusionRule(organization = "org.ethereum"),
-//      ExclusionRule(organization = "javax.xml.bind"),
-//    ).force(),
+  "org.ergoplatform" %% "ergo-core" % "5.0.20"
 )
