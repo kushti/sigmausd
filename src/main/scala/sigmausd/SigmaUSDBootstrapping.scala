@@ -9,6 +9,7 @@ import org.ergoplatform.kiosk.ergo._
 
 object SigmaUSDBootstrapping extends ContractUtils {
   import TokenIds.Mainnet._
+
   override def defaultSubstitutionMap: Map[String, String] = Map(
     "bankNFT"       -> bankNFT,
     "ballotTokenId" -> ballotTokenId
