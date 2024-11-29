@@ -19,14 +19,15 @@ object TestnetPoolV1Deployment extends App {
 
   // only following parameters are different
   val substitutionMap: Map[String, (String, String)] = Map(
-    "oracleTokenId" -> ("8c27dd9d8a35aac1e3167d58858c0a8b4059b277da790552e37eba22df9b9035", ""),
+    "oracleTokenId" -> ("8c27dd9d8a35aac1e3167d58858c0a8b4059b277da790552e37eba22df9b9035", "02a0e09e3e0d576613f5dc2d70002b92f0ee26d74c0cd536b030f16c1a13e485"),
     "minOracleBoxes" -> ("4", "1"),
-    "poolNft" -> ("011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f", ""),
-    "updateNft" -> ("720978c041239e7d6eb249d801f380557126f6324e12c5ba9172d820be2e1dde", ""),
-    "liveEpochTreeHash" -> ("77dffd47b690caa52fe13345aaf64ecdf7d55f2e7e3496e8206311f491aa46cd", "")
+    "poolNft" -> ("011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f", "319ed40043bdded7bad9cf20bb3feff9a56533c9b80d004c79a535b6cf5141d0"),
+    "updateNft" -> ("720978c041239e7d6eb249d801f380557126f6324e12c5ba9172d820be2e1dde", "00052cfea4e20f035368796a5269d38302a491141c02f0e22b8319753b61eb90"),
+    "ballotToken" -> ("", "0317ecf0303dc2f2a4a828e6758ee706813b022f6d8f7ef02651865e4e80e859"),
+    "liveEpochTreeHash" -> ("77dffd47b690caa52fe13345aaf64ecdf7d55f2e7e3496e8206311f491aa46cd", "700db65fdc4cacbc62cc8e7e53755095f13d65e7f256a0181b70774542883246")
   )
 
-  val mode = mainnetIndex // mainnet mode
+  val mode = testnetIndex // mainnet mode
 
   val networkPrefix = if(mode == mainnetIndex) {
     ErgoAddressEncoder.MainnetNetworkPrefix
@@ -242,10 +243,19 @@ object TestnetPoolV1Deployment extends App {
   println("Live epoch tree hash: " + liveEpochTreeHash)
   val liveEpochAddress = Pay2SAddress(liveEpochTree)
 
+  val epochPreparationTree = compile(epochPreparationScript)
+  val epochPreparationTreeHash = Base16.encode(Blake2b256.hash(epochPreparationTree.bytes))
+  val epochPreparationAddress = Pay2SAddress(epochPreparationTree)
+
+  val poolDepositTree = compile(poolDepositScript)
+  val poolDepositAddress = Pay2SAddress(poolDepositTree)
+
   val datapointTree = compile(datapointScript)
   val datapointAddress = Pay2SAddress(datapointTree)
 
   println("Live epoch address: " + liveEpochAddress)
+  println("Epoch preparation address: " + liveEpochAddress)
+  println("Pool deposit address: " + poolDepositAddress)
   println("Datapoint address: " + datapointAddress)
 
   val oracleTokenId = if(mode == mainnetIndex){
@@ -257,14 +267,12 @@ object TestnetPoolV1Deployment extends App {
   def serializeValue(v: Constant[_ <: SType]) = {
     Base16.encode(ValueSerializer.serialize(v))
   }
-  val participantAddress = "3WvjmwdM9Lupn7fXPMB2uojweHwQQiLzdLSo1XRo3tgVCoBfL4ny"
-  val participantPubKey = serializeValue(GroupElementConstant(tae.fromString(participantAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
+  val dummyLiveEpochBoxId = serializeValue(ByteArrayConstant(Array(1.toByte)))
+  val dummyDatapoint = serializeValue(LongConstant(531049159L))
 
-  val dummyBoxId = serializeValue(ByteArrayConstant(Array(1.toByte)))
+  def datapointContractDeploymentRequest(participantAddress: String): String = {
+    val participantPubKey = serializeValue(GroupElementConstant(tae.fromString(participantAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
 
-  val dummyDatapoint = serializeValue(LongConstant(0))
-
-  def datapointContractDeploymentRequest(): String = {
     s"""
        |  [
        |    {
@@ -272,13 +280,13 @@ object TestnetPoolV1Deployment extends App {
        |      "value": 1000000000,
        |      "assets": [
        |        {
-       |          "tokenId": "$oracleTokenId",
+       |          "tokenId": "${subst("oracleTokenId")}",
        |          "amount": 1
        |        }
        |      ],
        |      "registers": {
        |        "R4": "$participantPubKey",
-       |        "R5": "$dummyBoxId",
+       |        "R5": "$dummyLiveEpochBoxId",
        |        "R6": "$dummyDatapoint"
        |      }
        |    }
@@ -286,6 +294,33 @@ object TestnetPoolV1Deployment extends App {
        |""".stripMargin
   }
 
-  println(datapointContractDeploymentRequest())
 
+  def epochPreparationDeploymentRequest(): String = {
+    s"""
+       |  [
+       |    {
+       |      "address": "$epochPreparationAddress",
+       |      "value": 10000000000,
+       |      "assets": [
+       |        {
+       |          "tokenId": "${subst("poolNft")}",
+       |          "amount": 1
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "$dummyDatapoint",
+       |        "R5": "0480b518"
+       |      }
+       |    }
+       |  ]
+       |""".stripMargin
+  }
+
+  println("Epoch Preparation deployment request: ")
+  println(epochPreparationDeploymentRequest())
+  println("------------------------------")
+  println("Datapoint deployment requests: ")
+  println(datapointContractDeploymentRequest("3WvjmwdM9Lupn7fXPMB2uojweHwQQiLzdLSo1XRo3tgVCoBfL4ny"))
+  println(datapointContractDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+  println("------------------------------")
 }
