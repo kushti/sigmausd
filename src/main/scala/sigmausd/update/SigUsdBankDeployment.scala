@@ -4,13 +4,14 @@ import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress}
 import org.ergoplatform.kiosk.ergo.KioskType
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
-import sigmastate.Values.ErgoTree
+import sigmastate.Values.{ErgoTree, LongConstant}
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
+import sigmastate.serialization.ValueSerializer
 
 object SigUsdBankDeployment extends App with SubstitutionUtils {
 
-  override val mode = mainnetIndex
+  override val mode = testnetIndex
   override val substitutionMap = super.substitutionMap ++ Map.empty
 
   val networkPrefix = if(mode == mainnetIndex) {
@@ -233,7 +234,7 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
       |  // Got via http://tomeko.net/online_tools/hex_to_base64.php
       |  val ballotTokenId = fromBase16("${subst("bankBallotTokenId")}")
       |
-      |  val minVotes = ${subst("minBankUpdateVotes")}
+      |  val minVotes = 3
       |
       |  // collect and update in one step
       |  val updateBoxOut = OUTPUTS(0) // copy of this box is the 1st output
@@ -271,9 +272,9 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
       |}
       |""".stripMargin
 
-  val bankV1Tree = compile(bankV1Script)
+  def bankV1Tree = compile(bankV1Script)
   val bankV1TreeHash = Base16.encode(Blake2b256.hash(bankV1Tree.bytes))
-  val bankV1Address = Pay2SAddress(bankV1Tree)
+  def bankV1Address = Pay2SAddress(bankV1Tree)
 
   val ballotTree = compile(ballotScript)
   val ballotAddress = Pay2SAddress(ballotTree)
@@ -281,7 +282,41 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
   val bankUpdateTree = compile(updateScript)
   val bankUpdateAddress = Pay2SAddress(bankUpdateTree)
 
+  def bankDeploymentRequest(): String = {
+    val zero = Base16.encode(ValueSerializer.serialize(LongConstant(0L)))
+    s"""
+       |  [
+       |    {
+       |      "address": "$bankV1Address",
+       |      "value": 1000000000,
+       |      "assets": [
+       |        {
+       |          "tokenId": "${subst("bankNft")}",
+       |          "amount": 1
+       |        },
+       |        {
+       |          "tokenId": "${subst("sigUSD")}",
+       |          "amount": 10000000000001
+       |        },
+       |        {
+       |          "tokenId": "${subst("sigRSV")}",
+       |          "amount": 10000000000001
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "$zero",
+       |        "R5": "$zero"
+       |      }
+       |    }
+       |  ]
+       |""".stripMargin
+  }
+
   println("Bank V1 address: " + bankV1Address)
   println("Ballot address: " + ballotAddress)
   println("Bank update address: " + bankUpdateAddress)
+  println("===========================================")
+  println("Bank deployment request: ")
+  println(bankDeploymentRequest())
+
 }
