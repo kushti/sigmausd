@@ -5,7 +5,7 @@ import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import org.ergoplatform.kiosk.ergo.KioskType
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
-import sigmastate.Values.{ErgoTree, GroupElementConstant, LongConstant}
+import sigmastate.Values.{ByteArrayConstant, ErgoTree, GroupElementConstant, LongConstant}
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
@@ -465,7 +465,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |""".stripMargin
 
   val bankV2Tree = compile(bankV2Script)
-  val bankV2TreeHash = Base16.encode(Blake2b256.hash(bankV2Tree.bytes))
+  val bankV2TreeHash = Blake2b256.hash(bankV2Tree.bytes)
   val bankV2Address = Pay2SAddress(bankV2Tree)
 
   def bankV1DeploymentRequest(): String = {
@@ -516,11 +516,13 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   }
 
   def voteForUpdateDeploymentRequest(voterAddress: String): String = {
-    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, false)
-    val updateBoxId = bytesToId(updateBox.get.id)
+    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
+    val updateBoxId = serializeValue(ByteArrayConstant(updateBox.get.id))
 
     val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
-    val zero = Base16.encode(ValueSerializer.serialize(LongConstant(0L)))
+    val zero = serializeValue(LongConstant(0L))
+    val encodedBankV2TreeHash = serializeValue(ByteArrayConstant(bankV2TreeHash))
+
     s"""
        |  [
        |    {
@@ -536,7 +538,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |        "R4": "$voterPubKey",
        |        "R5": "$zero",
        |        "R6": "$updateBoxId",
-       |        "R7": "$bankV2TreeHash"
+       |        "R7": "$encodedBankV2TreeHash"
        |      }
        |    }
        |  ]

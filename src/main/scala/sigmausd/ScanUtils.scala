@@ -49,7 +49,6 @@ trait ScanUtils extends ApiCodecs {
 
   def fetchSingleBox(serverUrl: String, scanId: Int, includeUnconfirmed: Boolean = false): Option[ErgoBox] = {
     val bs = fetchScanBoxes(serverUrl, scanId, includeUnconfirmed)
-    println(bs.map(_.creationHeight))
     bs.headOption
   }
 
