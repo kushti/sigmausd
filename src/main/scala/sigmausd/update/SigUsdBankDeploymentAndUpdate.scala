@@ -1,15 +1,18 @@
 package sigmausd.update
 
-import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress}
+import org.ergoplatform.core.bytesToId
+import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import org.ergoplatform.kiosk.ergo.KioskType
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
-import sigmastate.Values.{ErgoTree, LongConstant}
+import sigmastate.Values.{ErgoTree, GroupElementConstant, LongConstant}
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
+import sigmausd.ScanUtils
+import sigmausd.update.TestnetPoolV1Deployment.serializeValue
 
-object SigUsdBankDeployment extends App with SubstitutionUtils {
+object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with SubstitutionUtils {
 
   override val mode = testnetIndex
   override val substitutionMap = super.substitutionMap ++ Map.empty
@@ -19,6 +22,19 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
   } else {
     ErgoAddressEncoder.TestnetNetworkPrefix
   }
+
+  val serverUrl: String = if (mode == mainnetIndex) {
+    null
+  } else {
+    "http://127.0.0.1:9053"
+  }
+
+  val updateBoxScanId: Int = if (mode == mainnetIndex) {
+    0 // todo : set
+  } else {
+    23
+  }
+
 
   implicit val eae = new ErgoAddressEncoder(networkPrefix)
 
@@ -39,13 +55,8 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
       |
       |      val feePercent = 2 // in percent, so 2% fee
       |
-      |      // Base-64 version of ERG/USD oracle pool NFT 011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f
-      |      // UI at https://explorer.ergoplatform.com/en/oracle-pool-state/ergusd
-      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
       |      val oraclePoolNFT = fromBase16("${subst("poolNft")}")
       |
-      |      // Base-64 version of bank update NFT 239c170b7e82f94e6b05416f14b8a2a57e0bfff0e3c93f4abbcd160b6a5b271a
-      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
       |      val updateNFT = fromBase16("${subst("bankUpdateNft")}")
       |
       |      val coolingOffHeight = 460000
@@ -287,7 +298,7 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
   val bankUpdateAddress = Pay2SAddress(bankUpdateTree)
 
   val bankV2Script =
-    """
+    s"""
       |{
       |      // SigmaUSD bank V2 contract.
       |      // Ballot & update contracts are the same for V2.
@@ -307,18 +318,13 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
       |
       |      val feePercent = 2 // in percent, so 2% fee
       |
-      |      // Base-64 version of ERG/USD oracle pool NFT 011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f
-      |      // UI at https://explorer.ergoplatform.com/en/oracle-pool-state/ergusd
-      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      |      val oraclePoolNFT = fromBase64("AR0zZN4H5aJvDE7vCFLN2zhwOakhtxVO88qyLG7aiH8=")
+      |      val oraclePoolNFT = fromBase16("${subst("poolNft")}")
       |
-      |      // Base-64 version of bank update NFT 239c170b7e82f94e6b05416f14b8a2a57e0bfff0e3c93f4abbcd160b6a5b271a
-      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      |      val updateNFT = fromBase64("I5wXC36C+U5rBUFvFLiipX4L//DjyT9Ku80WC2pbJxo=")
+      |      val updateNFT = fromBase16("${subst("bankUpdateNft")}")
       |
       |      val minStorageRent = 10000000L
       |      val minReserveRatioPercent = 400L // percent
-      |      val maxReserveRatioPercent = 800L // percentdataInput
+      |      val maxReserveRatioPercent = 800L // percent
       |      val LongMax = 9223372036854775807L
       |      val rcDefaultPrice = 1000000L
       |
@@ -509,6 +515,38 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
        |""".stripMargin
   }
 
+  def voteForUpdateDeploymentRequest(voterAddress: String): String = {
+    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, false)
+    val updateBoxId = bytesToId(updateBox.get.id)
+
+    val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
+    val zero = Base16.encode(ValueSerializer.serialize(LongConstant(0L)))
+    s"""
+       |  [
+       |    {
+       |      "address": "$bankV1Address",
+       |      "value": 1000000000,
+       |      "assets": [
+       |        {
+       |          "tokenId": "${subst("bankBallotTokenId")}",
+       |          "amount": 1
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "$voterPubKey",
+       |        "R5": "$zero",
+       |        "R6": "$updateBoxId",
+       |        "R7": "$bankV2TreeHash"
+       |      }
+       |    }
+       |  ]
+       |""".stripMargin
+  }
+
+  def updateDeploymentRequest(voterAddress: String): String = {
+    ""
+  }
+
   println("Bank V1 address: " + bankV1Address)
   println("Ballot address: " + ballotAddress)
   println("Bank update address: " + bankUpdateAddress)
@@ -517,5 +555,10 @@ object SigUsdBankDeployment extends App with SubstitutionUtils {
   println(bankV1DeploymentRequest())
   println("Bank update deployment request: ")
   println(bankUpdateDeploymentRequest())
+  println("Vote for update deployment requests: ")
+  println("kushti: ")
+  println(voteForUpdateDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
 
+  println("Michael: ")
+  println(voteForUpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
 }

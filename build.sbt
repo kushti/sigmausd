@@ -29,7 +29,7 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion)
 
 libraryDependencies ++= Seq(
-//  "org.scalaj" %% "scalaj-http" % "2.3.0",
+  "org.scalaj" %% "scalaj-http" % "2.4.2",
   "org.ergoplatform" %% "ergo-appkit" % "5.0.4",
   "org.ergoplatform" %% "kiosk" % "1.0.0",
   "org.ergoplatform" %% "ergo-core" % "5.0.20"

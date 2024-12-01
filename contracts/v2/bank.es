@@ -17,14 +17,9 @@
 
       val feePercent = 2 // in percent, so 2% fee
 
-      // Base-64 version of ERG/USD oracle pool NFT 011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f
-      // UI at https://explorer.ergoplatform.com/en/oracle-pool-state/ergusd
-      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      val oraclePoolNFT = fromBase64("AR0zZN4H5aJvDE7vCFLN2zhwOakhtxVO88qyLG7aiH8=")
+      val oraclePoolNFT = fromBase16("011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f")
 
-      // Base-64 version of bank update NFT 239c170b7e82f94e6b05416f14b8a2a57e0bfff0e3c93f4abbcd160b6a5b271a
-      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      val updateNFT = fromBase64("I5wXC36C+U5rBUFvFLiipX4L//DjyT9Ku80WC2pbJxo=")
+      val updateNFT = fromBase16("239c170b7e82f94e6b05416f14b8a2a57e0bfff0e3c93f4abbcd160b6a5b271a")
 
       val minStorageRent = 10000000L
       val minReserveRatioPercent = 400L // percent

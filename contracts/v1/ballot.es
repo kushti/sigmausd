@@ -1,7 +1,7 @@
 {
   // This box (ballot box):
   // R4 the group element of the owner of the ballot token [GroupElement]
-  // R5 dummy Int due to AOTC non-lazy evaluation (since bank box has Long at R5). Due to the line marked ****
+  // R5 dummy Long due to AOTC non-lazy evaluation (since bank box has Long at R5). Due to the line marked ****
   // R6 the box id of the update box [Coll[Byte]]
   // R7 the value voted for [Coll[Byte]]
 
