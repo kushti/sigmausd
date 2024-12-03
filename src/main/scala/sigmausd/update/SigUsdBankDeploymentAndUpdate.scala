@@ -1,11 +1,11 @@
 package sigmausd.update
 
-import org.ergoplatform.core.bytesToId
+import org.ergoplatform.ErgoBox.{R4, R5}
 import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import org.ergoplatform.kiosk.ergo.KioskType
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
-import sigmastate.Values.{ByteArrayConstant, ErgoTree, GroupElementConstant, LongConstant}
+import sigmastate.Values.{ByteArrayConstant, ErgoTree, GroupElementConstant, IntConstant, LongConstant, Tuple}
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
@@ -29,10 +29,22 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
     "http://127.0.0.1:9053"
   }
 
+  val bankBoxScanId: Int = if (mode == mainnetIndex) {
+    0 // todo : set
+  } else {
+    22
+  }
+
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
     23
+  }
+
+  val ballotBoxScanId: Int = if (mode == mainnetIndex) {
+    0 // todo : set
+  } else {
+    25
   }
 
 
@@ -527,7 +539,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |  [
        |    {
        |      "address": "$bankV1Address",
-       |      "value": 1000000000,
+       |      "value": 10000000000,
        |      "assets": [
        |        {
        |          "tokenId": "${subst("bankBallotTokenId")}",
@@ -545,8 +557,115 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |""".stripMargin
   }
 
-  def updateDeploymentRequest(voterAddress: String): String = {
-    ""
+  def updateDeploymentRequest(): String = {
+    val bankBox = fetchSingleBox(serverUrl, bankBoxScanId, includeUnconfirmed = false)
+    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
+    val ballotBoxes = fetchScanBoxes(serverUrl, ballotBoxScanId, includeUnconfirmed = false)
+    // inputs:
+    // #0 - update
+    // #1 - bank
+    // #2,3,4 - votes
+    // #5 - fee provider
+    // outputs:
+    // #0 - update
+    // #1 - bank
+    // #2,3,4 - votes
+    // #5 - fee
+
+    val updateInput = updateBox.get
+    val bankInput = bankBox.get
+
+    val feeProviderInput = "80f591a5250008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a99fd75b000033dc0447ff0e62e3eec3b8c5a2419db54fe131d3e6087310386cc0a0d2b54b5800"
+
+    val inputs = (Seq(updateInput, bankInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
+
+    val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
+
+
+    s"""
+      |{
+      |  "requests": [
+      |    {
+      |      "address": "${Pay2SAddress(updateInput.ergoTree)}",
+      |      "value": ${updateInput.value + 10000000000L},
+      |      "assets": [
+      |        {
+      |          "tokenId": "${Base16.encode(updateInput.additionalTokens(0)._1.toArray)}",
+      |          "amount": ${updateInput.additionalTokens(0)._2}
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "address": "${Pay2SAddress(bankInput.ergoTree)}",
+      |      "value": ${bankInput.value},
+      |      "assets": [
+      |        {
+      |          "tokenId": "${Base16.encode(bankInput.additionalTokens(0)._1.toArray)}",
+      |          "amount": ${bankInput.additionalTokens(0)._2}
+      |        },
+      |        {
+      |          "tokenId": "${Base16.encode(bankInput.additionalTokens(1)._1.toArray)}",
+      |          "amount": ${bankInput.additionalTokens(1)._2}
+      |        },
+      |        {
+      |          "tokenId": "${Base16.encode(bankInput.additionalTokens(2)._1.toArray)}",
+      |          "amount": ${bankInput.additionalTokens(2)._2}
+      |        }
+      |      ],
+      |      "registers": {
+      |        "R4": "${serializeValue(bankInput.additionalRegisters(R4))}",
+      |        "R5": "${serializeValue(bankInput.additionalRegisters(R5))}",
+      |        "R6": "${serializeValue(IntConstant(0))}",
+      |        "R7": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}",
+      |      }
+      |    },
+      |    {
+      |      "address": "${Pay2SAddress(ballotBoxes(0).ergoTree)}",
+      |      "value": ${ballotBoxes(0).value},
+      |      "assets": [
+      |        {
+      |          "tokenId": "${Base16.encode(ballotBoxes(0).additionalTokens(0)._1.toArray)}",
+      |          "amount": ${ballotBoxes(0).additionalTokens(0)._2}
+      |        }
+      |      ],
+      |      "registers": {
+      |        "R4": "${serializeValue(ballotBoxes(0).additionalRegisters(R4))}"
+      |      }
+      |    },
+      |    {
+      |      "address": "${Pay2SAddress(ballotBoxes(1).ergoTree)}",
+      |      "value": ${ballotBoxes(1).value},
+      |      "assets": [
+      |        {
+      |          "tokenId": "${Base16.encode(ballotBoxes(1).additionalTokens(0)._1.toArray)}",
+      |          "amount": ${ballotBoxes(1).additionalTokens(0)._2}
+      |        }
+      |      ],
+      |      "registers": {
+      |        "R4": "${serializeValue(ballotBoxes(1).additionalRegisters(R4))}"
+      |      }
+      |    },
+      |    {
+      |      "address": "${Pay2SAddress(ballotBoxes(2).ergoTree)}",
+      |      "value": ${ballotBoxes(2).value},
+      |      "assets": [
+      |        {
+      |          "tokenId": "${Base16.encode(ballotBoxes(2).additionalTokens(0)._1.toArray)}",
+      |          "amount": ${ballotBoxes(2).additionalTokens(0)._2}
+      |        }
+      |      ],
+      |      "registers": {
+      |        "R4": "${serializeValue(ballotBoxes(2).additionalRegisters(R4))}"
+      |      }
+      |    }
+      |  ],
+      |  "fee": 10000000,
+      |  "inputsRaw": [
+      |    $inputsString
+      |  ],
+      |  "dataInputsRaw": []
+      |}
+      |""".stripMargin
   }
 
   println("Bank V1 address: " + bankV1Address)
@@ -563,4 +682,8 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
 
   println("Michael: ")
   println(voteForUpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
+
+  println("Bank update: ")
+  println(updateDeploymentRequest())
+
 }

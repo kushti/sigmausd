@@ -5,7 +5,7 @@ import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
 import sigmastate.SType
-import sigmastate.Values.{ByteArrayConstant, Constant, ErgoTree, GroupElementConstant, LongConstant}
+import sigmastate.Values.{ByteArrayConstant, ErgoTree, EvaluatedValue, GroupElementConstant, LongConstant}
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
@@ -241,7 +241,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
     substitutionMap("oracleTokenId")._2
   }
 
-  def serializeValue(v: Constant[_ <: SType]) = {
+  def serializeValue(v: EvaluatedValue[_ <: SType]) = {
     Base16.encode(ValueSerializer.serialize(v))
   }
   val dummyLiveEpochBoxId = serializeValue(ByteArrayConstant(Array(1.toByte)))
