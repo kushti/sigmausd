@@ -32,19 +32,19 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   val bankBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    22
+    26
   }
 
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    23
+    27
   }
 
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    25
+    28
   }
 
 
@@ -538,7 +538,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
     s"""
        |  [
        |    {
-       |      "address": "$bankV1Address",
+       |      "address": "$ballotAddress",
        |      "value": 10000000000,
        |      "assets": [
        |        {
@@ -616,7 +616,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |        "R4": "${serializeValue(bankInput.additionalRegisters(R4))}",
       |        "R5": "${serializeValue(bankInput.additionalRegisters(R5))}",
       |        "R6": "${serializeValue(IntConstant(0))}",
-      |        "R7": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}",
+      |        "R7": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}"
       |      }
       |    },
       |    {
@@ -668,6 +668,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |""".stripMargin
   }
 
+  println("Bank V2 tree hash: " + Base16.encode(bankV2TreeHash))
   println("Bank V1 address: " + bankV1Address)
   println("Ballot address: " + ballotAddress)
   println("Bank update address: " + bankUpdateAddress)
