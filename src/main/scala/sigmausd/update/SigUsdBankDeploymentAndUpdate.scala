@@ -594,7 +594,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |      ]
       |    },
       |    {
-      |      "address": "${Pay2SAddress(bankInput.ergoTree)}",
+      |      "address": "${Pay2SAddress(bankV2Tree)}",
       |      "value": ${bankInput.value},
       |      "assets": [
       |        {
