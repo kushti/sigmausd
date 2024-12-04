@@ -1,6 +1,6 @@
 package sigmausd.update
 
-import org.ergoplatform.ErgoBox.{R4, R5}
+import org.ergoplatform.ErgoBox.{R4, R5, R6, R7}
 import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import org.ergoplatform.kiosk.ergo.KioskType
 import scorex.crypto.hash.Blake2b256
@@ -32,19 +32,19 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   val bankBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    26
+    29
   }
 
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    27
+    30
   }
 
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    28
+    31
   }
 
 
@@ -489,16 +489,16 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |      "value": 1000000000,
        |      "assets": [
        |        {
-       |          "tokenId": "${subst("bankNft")}",
-       |          "amount": 1
-       |        },
-       |        {
        |          "tokenId": "${subst("sigUSD")}",
        |          "amount": 10000000000001
        |        },
        |        {
        |          "tokenId": "${subst("sigRSV")}",
        |          "amount": 10000000000001
+       |        },
+       |        {
+       |          "tokenId": "${subst("bankNft")}",
+       |          "amount": 1
        |        }
        |      ],
        |      "registers": {
@@ -578,9 +578,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
     val feeProviderInput = "80f591a5250008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a99fd75b000033dc0447ff0e62e3eec3b8c5a2419db54fe131d3e6087310386cc0a0d2b54b5800"
 
     val inputs = (Seq(updateInput, bankInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
-
     val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
-
 
     s"""
       |{
@@ -684,7 +682,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   println("Michael: ")
   println(voteForUpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
 
-  println("Bank update: ")
+  println("Bank update (for /wallet/transaction/send ): ")
   println(updateDeploymentRequest())
 
 }
