@@ -98,13 +98,13 @@ class BankMintSpec
                 new ErgoToken(bankNFT, 1)
               )
               .contract(
-                ctx.compileContract(ConstantsBuilder.empty(), bankV1Script)
+                ctx.compileContract(ConstantsBuilder.empty(), bankV2Script)
               )
               .build()
               .convertToInputWith(fakeTxId3, fakeIndex)
 
           val validBankOutBox = KioskBox(
-            bankV1Address,
+            bankV2Address,
             bankBoxNanoErgsIn + bankReserveDeltaAfterFee,
             registers = Array(
               KioskLong(stableCoinCirculationOut),
@@ -219,13 +219,13 @@ class BankMintSpec
                 new ErgoToken(bankNFT, 1)
               )
               .contract(
-                ctx.compileContract(ConstantsBuilder.empty(), bankV1Script)
+                ctx.compileContract(ConstantsBuilder.empty(), bankV2Script)
               )
               .build()
               .convertToInputWith(fakeTxId3, fakeIndex)
 
           val validBankOutBox = KioskBox(
-            bankV1Address,
+            bankV2Address,
             bankBoxNanoErgsIn - bankReserveDeltaAfterFee,
             registers = Array(
               KioskLong(stableCoinCirculationOut),
@@ -331,13 +331,13 @@ class BankMintSpec
                 new ErgoToken(bankNFT, 1)
               )
               .contract(
-                ctx.compileContract(ConstantsBuilder.empty(), bankV1Script)
+                ctx.compileContract(ConstantsBuilder.empty(), bankV2Script)
               )
               .build()
               .convertToInputWith(fakeTxId3, fakeIndex)
 
           val validBankOutBox = KioskBox(
-            bankV1Address,
+            bankV2Address,
             bankBoxNanoErgsIn + bankReserveDeltaAfterFee,
             registers = Array(
               KioskLong(stableCoinCirculationOut),
@@ -452,13 +452,13 @@ class BankMintSpec
                 new ErgoToken(bankNFT, 1)
               )
               .contract(
-                ctx.compileContract(ConstantsBuilder.empty(), bankV1Script)
+                ctx.compileContract(ConstantsBuilder.empty(), bankV2Script)
               )
               .build()
               .convertToInputWith(fakeTxId3, fakeIndex)
 
           val validBankOutBox = KioskBox(
-            bankV1Address,
+            bankV2Address,
             bankBoxNanoErgsIn - bankReserveDeltaAfterFee,
             registers = Array(
               KioskLong(stableCoinCirculationOut),

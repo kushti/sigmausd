@@ -58,7 +58,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
     compiler.compile(env.view.mapValues(_.value).toMap, ergoScript).buildTree.asBoolValue.asSigmaProp
   }
 
-  val bankV1Script =
+  val bankV2Script =
     s"""
       |{
       |      // this box
@@ -299,9 +299,9 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |}
       |""".stripMargin
 
-  val bankV1Tree = compile(bankV1Script)
-  val bankV1TreeHash = Base16.encode(Blake2b256.hash(bankV1Tree.bytes))
-  val bankV1Address = Pay2SAddress(bankV1Tree)
+  val bankV2Tree = compile(bankV2Script)
+  val bankV2TreeHash = Base16.encode(Blake2b256.hash(bankV2Tree.bytes))
+  val bankV2Address = Pay2SAddress(bankV2Tree)
 
   val ballotTree = compile(ballotScript)
   val ballotAddress = Pay2SAddress(ballotTree)
@@ -309,7 +309,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   val bankUpdateTree = compile(updateScript)
   val bankUpdateAddress = Pay2SAddress(bankUpdateTree)
 
-  val bankV2Script =
+  val bankV3Script =
     s"""
       |{
       |      // SigmaUSD bank V2 contract.
@@ -476,16 +476,16 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |}
       |""".stripMargin
 
-  val bankV2Tree = compile(bankV2Script)
-  val bankV2TreeHash = Blake2b256.hash(bankV2Tree.bytes)
-  val bankV2Address = Pay2SAddress(bankV2Tree)
+  val bankV3Tree = compile(bankV3Script)
+  val bankV3TreeHash = Blake2b256.hash(bankV3Tree.bytes)
+  val bankV3Address = Pay2SAddress(bankV3Tree)
 
-  def bankV1DeploymentRequest(): String = {
+  def bankV2DeploymentRequest(): String = {
     val zero = Base16.encode(ValueSerializer.serialize(LongConstant(0L)))
     s"""
        |  [
        |    {
-       |      "address": "$bankV1Address",
+       |      "address": "$bankV2Address",
        |      "value": 1000000000,
        |      "assets": [
        |        {
@@ -533,7 +533,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
 
     val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
     val zero = serializeValue(LongConstant(0L))
-    val encodedBankV2TreeHash = serializeValue(ByteArrayConstant(bankV2TreeHash))
+    val encodedBankV2TreeHash = serializeValue(ByteArrayConstant(bankV3TreeHash))
 
     s"""
        |  [
@@ -594,7 +594,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |      ]
       |    },
       |    {
-      |      "address": "${Pay2SAddress(bankV2Tree)}",
+      |      "address": "${Pay2SAddress(bankV3Tree)}",
       |      "value": ${bankInput.value},
       |      "assets": [
       |        {
@@ -666,13 +666,13 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |""".stripMargin
   }
 
-  println("Bank V2 tree hash: " + Base16.encode(bankV2TreeHash))
-  println("Bank V1 address: " + bankV1Address)
+  println("Bank V3 tree hash: " + Base16.encode(bankV3TreeHash))
+  println("Bank V2 address: " + bankV2Address)
   println("Ballot address: " + ballotAddress)
   println("Bank update address: " + bankUpdateAddress)
   println("===========================================")
-  println("Bank V1 deployment request: ")
-  println(bankV1DeploymentRequest())
+  println("Bank V2 deployment request: ")
+  println(bankV2DeploymentRequest())
   println("Bank update deployment request: ")
   println(bankUpdateDeploymentRequest())
   println("Vote for update deployment requests: ")

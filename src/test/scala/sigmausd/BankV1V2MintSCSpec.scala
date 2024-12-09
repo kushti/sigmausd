@@ -91,13 +91,13 @@ class BankV1V2MintSCSpec
           new ErgoToken(bankNFT, 1)
         )
         .contract(
-          ctx.compileContract(ConstantsBuilder.empty(), bankV1Script)
+          ctx.compileContract(ConstantsBuilder.empty(), bankV2Script)
         )
         .build()
         .convertToInputWith(fakeTxId3, fakeIndex)
 
     val validBankOutBox = KioskBox(
-      bankV1Address,
+      bankV2Address,
       bankBoxNanoErgsIn + bankReserveDeltaAfterFee,
       registers = Array(
         KioskLong(stableCoinCirculationOut),
@@ -194,13 +194,13 @@ class BankV1V2MintSCSpec
           new ErgoToken(bankNFT, 1)
         )
         .contract(
-          ctx.compileContract(ConstantsBuilder.empty(), bankV2Script)
+          ctx.compileContract(ConstantsBuilder.empty(), bankV3Script)
         )
         .build()
         .convertToInputWith(fakeTxId3, fakeIndex)
 
     val validBankOutBox = KioskBox(
-      bankV2Address,
+      bankV3Address,
       bankBoxNanoErgsIn + bankReserveDeltaAfterFee,
       registers = Array(
         KioskLong(stableCoinCirculationOut),

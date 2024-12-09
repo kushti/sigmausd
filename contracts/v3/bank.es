@@ -1,25 +1,29 @@
 {
+      // SigmaUSD bank V2 contract.
+      // Ballot & update contracts are the same for V2.
+
+      // diff from V2:
+      //  * no cooling off period
+      //  * per-epoch minting limits are added for both SigUSD and SigRSV. For that, new register, R7, is used, to
+      //    store number of SigUSD and SigRSV tokens still allowed minted in the epoch (oracle update epoch). Also,
+      //    register R6 is used to store height of current oracle epoch start.
+
+
       // this box
-      // R4: Number of stable-coins in circulation
-      // R5: Number of reserve-coins in circulation
+      // R4: Long : Number of stable-coins in circulation
+      // R5: Long : Number of reserve-coins in circulation
+      // R6: Int  : Last oracle update height (to have limits per cycle)
+      // R7: (Long, Long) : Remaining limit for SigUsd and SigRSV minting per oracle update (added in V2)
 
       val feePercent = 2 // in percent, so 2% fee
 
-      // Base-64 version of ERG/USD oracle pool NFT 011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f
-      // UI at https://explorer.ergoplatform.com/en/oracle-pool-state/ergusd
-      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      val oraclePoolNFT = fromBase64("AR0zZN4H5aJvDE7vCFLN2zhwOakhtxVO88qyLG7aiH8=")
+      val oraclePoolNFT = fromBase16("011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f")
 
-      // Base-64 version of bank update NFT 239c170b7e82f94e6b05416f14b8a2a57e0bfff0e3c93f4abbcd160b6a5b271a
-      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      val updateNFT = fromBase64("I5wXC36C+U5rBUFvFLiipX4L//DjyT9Ku80WC2pbJxo=")
-
-      val coolingOffHeight = 460000
+      val updateNFT = fromBase16("239c170b7e82f94e6b05416f14b8a2a57e0bfff0e3c93f4abbcd160b6a5b271a")
 
       val minStorageRent = 10000000L
       val minReserveRatioPercent = 400L // percent
-      val defaultMaxReserveRatioPercent = 800L // percent
-      val INF = 1000000000L
+      val maxReserveRatioPercent = 800L // percentdataInput
       val LongMax = 9223372036854775807L
       val rcDefaultPrice = 1000000L
 
@@ -59,6 +63,7 @@
         val rcExchange = rcTokensIn != rcTokensOut
         val scExchange = scTokensIn != scTokensOut
 
+        // allowed to exchange stablecoins or reservecoins but not both
         val rcExchangeXorScExchange = (rcExchange || scExchange) && !(rcExchange && scExchange)
 
         val circDelta = receiptBox.R4[Long].get
@@ -67,10 +72,32 @@
         val rcCircDelta = if (rcExchange) circDelta else 0L
         val scCircDelta = if (rcExchange) 0L else circDelta
 
+        // V2 code below
+        val oracleUpdateHeight = rateBox.R5[Int].get
+        val limitFactor = 200 // 1 / 200, so 0.5% per oracle update
+        val limitsReg = bankBoxIn.R7[(Long, Long)].get
+        val limits = if (bankBoxIn.R6[Int].get != oracleUpdateHeight) {
+          val limit = bankBoxIn.value / limitFactor
+          (limit, limit)
+        } else {
+          limitsReg
+        }
+
+        val updLimits = if (scExchange && scCircDelta > 0) { // SC mint
+          (limits._1 - bcReserveDelta, limits._2)
+        } else if (rcExchange && rcCircDelta > 0) { // RC mint
+          (limits._1, limits._2 - bcReserveDelta)
+        } else {
+          (limits._1, limits._2)
+        }
+
+        val properLimit = (updLimits._1 >= 0 && updLimits._2 >= 0) && (bankBoxOut.R7[(Long, Long)].get == updLimits)
+
         val validDeltas = (scCircIn + scCircDelta == scCircOut) &&
                            (rcCircIn + rcCircDelta == rcCircOut) &&
                            (bcReserveIn + bcReserveDelta == bcReserveOut) &&
-                           scCircOut >= 0 && rcCircOut >= 0
+                           scCircOut >= 0 && rcCircOut >= 0 &&
+                           properLimit
 
         val coinsConserved = totalRcIn == totalRcOut && totalScIn == totalScOut
 
@@ -80,6 +107,7 @@
 
         val mandatoryRateConditions = rateBox.tokens(0)._1 == oraclePoolNFT
         val mandatoryBankConditions = bankBoxOut.value >= minStorageRent &&
+                                      bankBoxOut.R6[Int].get == oracleUpdateHeight &&
                                       bankBoxOut.propositionBytes == bankBoxIn.propositionBytes &&
                                       rcExchangeXorScExchange &&
                                       coinsConserved &&
@@ -90,7 +118,6 @@
         val bcReserveNeededOut = scCircOut * rate
         val bcReserveNeededIn = scCircIn * rate
         val liabilitiesIn = max(min(bcReserveIn, bcReserveNeededIn), 0)
-        val maxReserveRatioPercent = if (HEIGHT > coolingOffHeight) defaultMaxReserveRatioPercent else INF
 
         val reserveRatioPercentOut = if (bcReserveNeededOut == 0) maxReserveRatioPercent else bcReserveOut * 100 / bcReserveNeededOut
 

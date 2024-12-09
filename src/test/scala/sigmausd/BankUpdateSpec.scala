@@ -50,7 +50,7 @@ class BankUpdateSpec extends AnyPropSpec with Matchers with Common {
       // value to vote for; hash of new pool box script
       val valueVotedFor = KioskCollByte(
         Blake2b256.hash(
-          bankV1ErgoTree.bytes)) //todo: real update
+          bankV2ErgoTree.bytes)) //todo: real update
 
       // dummy custom input box for funding various transactions
       val fundingBox = ctx
@@ -139,7 +139,7 @@ class BankUpdateSpec extends AnyPropSpec with Matchers with Common {
           .value(fakeNanoErgs)
           .registers(r4Dummy.getErgoValue, r5Dummy.getErgoValue)
           .tokens(new ErgoToken(sigmaUSD, fakeNanoErgs), new ErgoToken(sigmaRSV, fakeNanoErgs * 4), new ErgoToken(bankNFT, 1))
-          .contract(ctx.compileContract(ConstantsBuilder.empty(), bankV1Script))
+          .contract(ctx.compileContract(ConstantsBuilder.empty(), bankV2Script))
           .build()
           .convertToInputWith(fakeTxId4, fakeIndex)
 
@@ -151,7 +151,7 @@ class BankUpdateSpec extends AnyPropSpec with Matchers with Common {
       )
 
       val validBankOutBox = KioskBox(
-        bankV1Address,
+        bankV2Address,
         fakeNanoErgs,
         registers = Array(r4Dummy, r5Dummy),
         tokens = Array((sigmaUSD, fakeNanoErgs), (sigmaRSV, fakeNanoErgs * 4), (bankNFT, 1))
@@ -216,7 +216,7 @@ class BankUpdateSpec extends AnyPropSpec with Matchers with Common {
       // value to vote for; hash of new pool box script
       val valueVotedFor = KioskCollByte(
         Blake2b256.hash(
-          bankV1ErgoTree.bytes)) //todo: real update
+          bankV2ErgoTree.bytes)) //todo: real update
 
       // dummy custom input box for funding various transactions
       val fundingBox = ctx
@@ -285,7 +285,7 @@ class BankUpdateSpec extends AnyPropSpec with Matchers with Common {
           .value(fakeNanoErgs)
           .registers(r4Dummy.getErgoValue, r5Dummy.getErgoValue)
           .tokens(new ErgoToken(sigmaUSD, fakeNanoErgs), new ErgoToken(sigmaRSV, fakeNanoErgs * 4), new ErgoToken(bankNFT, 1))
-          .contract(ctx.compileContract(ConstantsBuilder.empty(), bankV1Script))
+          .contract(ctx.compileContract(ConstantsBuilder.empty(), bankV2Script))
           .build()
           .convertToInputWith(fakeTxId4, fakeIndex)
 
@@ -297,7 +297,7 @@ class BankUpdateSpec extends AnyPropSpec with Matchers with Common {
       )
 
       val validBankOutBox = KioskBox(
-        bankV1Address,
+        bankV2Address,
         fakeNanoErgs,
         registers = Array(r4Dummy, r5Dummy),
         tokens = Array((sigmaUSD, fakeNanoErgs), (sigmaRSV, fakeNanoErgs * 4), (bankNFT, 1))
