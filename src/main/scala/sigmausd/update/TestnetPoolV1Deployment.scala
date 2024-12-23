@@ -215,6 +215,138 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
       |    }
       |""".stripMargin
 
+  def updateContract =
+    s"""
+      | { // This box (update box):
+      |      // Registers empty
+      |      //
+      |      // ballot boxes (Inputs)
+      |      // R4 the pub key of voter [GroupElement] (not used here)
+      |      // R5 dummy int due to AOTC non-lazy evaluation (from the line marked ****)
+      |      // R6 the box id of this box [Coll[Byte]]
+      |      // R7 the value voted for [Coll[Byte]]
+      |
+      |      // Base-64 version of the pool NFT 011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f
+      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
+      |      val poolNFT = fromBase16("${subst("poolNft")}")
+      |
+      |      // Base-64 version of the ballot token ID 053fefab5477138b760bc7ae666c3e2b324d5ae937a13605cb766ec5222e5518
+      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
+      |      val ballotTokenId = fromBase64("${subst("ballotToken")}")
+      |
+      |      // collect and update in one step
+      |      val updateBoxOut = OUTPUTS(0) // copy of this box is the 1st output
+      |      val validUpdateIn = SELF.id == INPUTS(0).id // this is 1st input
+      |
+      |      val poolBoxIn = INPUTS(1) // pool box is 2nd input
+      |      val poolBoxOut = OUTPUTS(1) // copy of pool box is the 2nd output
+      |
+      |      // compute the hash of the pool output box. This should be the value voted for
+      |      val poolBoxOutHash = blake2b256(poolBoxOut.propositionBytes)
+      |
+      |      val validPoolIn = poolBoxIn.tokens(0)._1 == poolNFT
+      |      val validPoolOut = poolBoxIn.tokens == poolBoxOut.tokens &&
+      |                         poolBoxIn.value == poolBoxOut.value &&
+      |                         poolBoxIn.R4[Long].get == poolBoxOut.R4[Long].get &&
+      |                         poolBoxIn.R5[Int].get == poolBoxOut.R5[Int].get
+      |
+      |
+      |      val validUpdateOut = SELF.tokens == updateBoxOut.tokens &&
+      |                           SELF.propositionBytes == updateBoxOut.propositionBytes &&
+      |                           SELF.value >= updateBoxOut.value // ToDo: change in next update
+      |      // Above line contains a (non-critical) bug:
+      |      // Instead of
+      |      //    SELF.value >= updateBoxOut.value
+      |      // we should have
+      |      //    updateBoxOut.value >= SELF.value
+      |      //
+      |      // In the next oracle pool update, this should be fixed
+      |      // Until then, this has no impact because this box can only be spent in an update
+      |      // In summary, the next update will involve (at the minimum)
+      |      //    1. New update contract (with above bugfix)
+      |      //    2. New updateNFT (because the updateNFT is locked to this contract)
+      |
+      |      def isValidBallot(b:Box) = {
+      |        b.tokens.size > 0 &&
+      |        b.tokens(0)._1 == ballotTokenId &&
+      |        b.R6[Coll[Byte]].get == SELF.id && // ensure vote corresponds to this box ****
+      |        b.R7[Coll[Byte]].get == poolBoxOutHash // check value voted for
+      |      }
+      |
+      |      val ballotBoxes = INPUTS.filter(isValidBallot)
+      |
+      |      val votesCount = ballotBoxes.fold(0L, {(accum: Long, b: Box) => accum + b.tokens(0)._2})
+      |
+      |      sigmaProp(validPoolIn && validPoolOut && validUpdateIn && validUpdateOut && votesCount >= 8) // minVotes = 8
+      |    }
+      |""".stripMargin
+
+  def updateContractPreV2 =
+    s"""
+      | { // This box (update box):
+      |      // Registers empty
+      |      //
+      |      // ballot boxes (Inputs)
+      |      // R4 the pub key of voter [GroupElement] (not used here)
+      |      // R5 dummy int due to AOTC non-lazy evaluation (from the line marked ****)
+      |      // R6 the box id of this box [Coll[Byte]]
+      |      // R7 the value voted for [Coll[Byte]]
+      |
+      |      // Base-64 version of the pool NFT 011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f
+      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
+      |      val poolNFT = fromBase64("${subst("poolNft")}")
+      |
+      |      // Base-64 version of the ballot token ID 053fefab5477138b760bc7ae666c3e2b324d5ae937a13605cb766ec5222e5518
+      |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
+      |      val ballotTokenId = fromBase64("${subst("ballotToken")}")
+      |
+      |      // collect and update in one step
+      |      val updateBoxOut = OUTPUTS(0) // copy of this box is the 1st output
+      |      val validUpdateIn = SELF.id == INPUTS(0).id // this is 1st input
+      |
+      |      val poolBoxIn = INPUTS(1) // pool box is 2nd input
+      |      val poolBoxOut = OUTPUTS(1) // copy of pool box is the 2nd output
+      |
+      |      // compute the hash of the pool output box. This should be the value voted for
+      |      val poolBoxOutHash = blake2b256(poolBoxOut.propositionBytes)
+      |
+      |      val validPoolIn = poolBoxIn.tokens(0)._1 == poolNFT
+      |      val validPoolOut = poolBoxIn.tokens == poolBoxOut.tokens &&
+      |                         poolBoxIn.value == poolBoxOut.value &&
+      |                         poolBoxIn.R4[Long].get == poolBoxOut.R4[Long].get &&
+      |                         poolBoxIn.R5[Int].get == poolBoxOut.R5[Int].get
+      |
+      |
+      |      val validUpdateOut = SELF.tokens == updateBoxOut.tokens &&
+      |                           SELF.propositionBytes == updateBoxOut.propositionBytes &&
+      |                           SELF.value >= updateBoxOut.value // ToDo: change in next update
+      |      // Above line contains a (non-critical) bug:
+      |      // Instead of
+      |      //    SELF.value >= updateBoxOut.value
+      |      // we should have
+      |      //    updateBoxOut.value >= SELF.value
+      |      //
+      |      // In the next oracle pool update, this should be fixed
+      |      // Until then, this has no impact because this box can only be spent in an update
+      |      // In summary, the next update will involve (at the minimum)
+      |      //    1. New update contract (with above bugfix)
+      |      //    2. New updateNFT (because the updateNFT is locked to this contract)
+      |
+      |      def isValidBallot(b:Box) = {
+      |        b.tokens.size > 0 &&
+      |        b.tokens(0)._1 == ballotTokenId &&
+      |        b.R6[Coll[Byte]].get == SELF.id && // ensure vote corresponds to this box ****
+      |        b.R7[Coll[Byte]].get == poolBoxOutHash // check value voted for
+      |      }
+      |
+      |      val ballotBoxes = INPUTS.filter(isValidBallot)
+      |
+      |      val votesCount = ballotBoxes.fold(0L, {(accum: Long, b: Box) => accum + b.tokens(0)._2})
+      |
+      |      sigmaProp(validPoolIn && validPoolOut && validUpdateIn && validUpdateOut && votesCount >= 8) // minVotes = 8
+      |    }
+      |""".stripMargin
+
   val liveEpochTree = compile(liveEpochContract)
   val liveEpochTreeHash = Base16.encode(Blake2b256.hash(liveEpochTree.bytes))
   println("Live epoch tree hash: " + liveEpochTreeHash)
