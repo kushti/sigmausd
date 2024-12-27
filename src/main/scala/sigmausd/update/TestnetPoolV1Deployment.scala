@@ -215,7 +215,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
       |    }
       |""".stripMargin
 
-  def updateContract =
+  def updateScript =
     s"""
       | { // This box (update box):
       |      // Registers empty
@@ -281,7 +281,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
       |    }
       |""".stripMargin
 
-  def updateContractPreV2 =
+  def updateScriptPreV2 =
     s"""
       | { // This box (update box):
       |      // Registers empty
@@ -362,10 +362,18 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
   val datapointTree = compile(datapointScript)
   val datapointAddress = Pay2SAddress(datapointTree)
 
+  val updateTree = compile(updateScript)
+  val updateAddress = Pay2SAddress(updateTree)
+
+  val updateTreePreV2 = compile(updateScriptPreV2)
+  val updateAddressPreV2 = Pay2SAddress(updateTreePreV2)
+
   println("Live epoch address: " + liveEpochAddress)
   println("Epoch preparation address: " + epochPreparationAddress)
   println("Pool deposit address: " + poolDepositAddress)
   println("Datapoint address: " + datapointAddress)
+  println("Pool update address: " + updateAddress)
+  println("Pool update address pre V2: " + updateAddressPreV2)
 
   val oracleTokenId = if(mode == mainnetIndex){
     substitutionMap("oracleTokenId")._1
