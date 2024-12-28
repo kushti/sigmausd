@@ -311,7 +311,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
       |      val poolBoxOutHash = blake2b256(poolBoxOut.propositionBytes)
       |
       |      val validPoolIn = poolBoxIn.tokens(0)._1 == poolNFT
-      |      val validPoolOut = poolBoxIn.tokens == poolBoxOut.tokens &&
+      |      val validPoolOut = poolBoxOut.tokens(0)._1 == poolNFT && // changed line
       |                         poolBoxIn.value == poolBoxOut.value &&
       |                         poolBoxIn.R4[Long].get == poolBoxOut.R4[Long].get &&
       |                         poolBoxIn.R5[Int].get == poolBoxOut.R5[Int].get
@@ -319,18 +319,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
       |
       |      val validUpdateOut = SELF.tokens == updateBoxOut.tokens &&
       |                           SELF.propositionBytes == updateBoxOut.propositionBytes &&
-      |                           SELF.value >= updateBoxOut.value // ToDo: change in next update
-      |      // Above line contains a (non-critical) bug:
-      |      // Instead of
-      |      //    SELF.value >= updateBoxOut.value
-      |      // we should have
-      |      //    updateBoxOut.value >= SELF.value
-      |      //
-      |      // In the next oracle pool update, this should be fixed
-      |      // Until then, this has no impact because this box can only be spent in an update
-      |      // In summary, the next update will involve (at the minimum)
-      |      //    1. New update contract (with above bugfix)
-      |      //    2. New updateNFT (because the updateNFT is locked to this contract)
+      |                           updateBoxOut.value >= SELF.value // changed line
       |
       |      def isValidBallot(b:Box) = {
       |        b.tokens.size > 0 &&
