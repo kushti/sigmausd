@@ -422,6 +422,40 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
        |""".stripMargin
   }
 
+  def poolUpdateDeploymentRequest(): String = {
+    s"""
+       |  [
+       |    {
+       |      "address": "$updateAddress",
+       |      "value": 1000000000,
+       |      "assets": [
+       |        {
+       |          "tokenId": "${subst("poolUpdateNft")}",
+       |          "amount": 1
+       |        }
+       |      ]
+       |    }
+       |  ]
+       |""".stripMargin
+  }
+
+  def poolUpdatePreV2DeploymentRequest(): String = {
+    s"""
+       |  [
+       |    {
+       |      "address": "$updateAddressPreV2",
+       |      "value": 1000000000,
+       |      "assets": [
+       |        {
+       |          "tokenId": "${subst("poolUpdatePreV2Nft")}",
+       |          "amount": 1
+       |        }
+       |      ]
+       |    }
+       |  ]
+       |""".stripMargin
+  }
+
   println("Epoch Preparation deployment request: ")
   println(epochPreparationDeploymentRequest())
   println("------------------------------")
@@ -429,4 +463,8 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
   println(datapointContractDeploymentRequest("3WvjmwdM9Lupn7fXPMB2uojweHwQQiLzdLSo1XRo3tgVCoBfL4ny"))
   println(datapointContractDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
   println("------------------------------")
+  println("Pool update deployment request: ")
+  println(poolUpdateDeploymentRequest())
+  println("Pool update PreV2 deployment request: ")
+  println(poolUpdatePreV2DeploymentRequest())
 }
