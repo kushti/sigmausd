@@ -480,6 +480,9 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   val bankV3TreeHash = Blake2b256.hash(bankV3Tree.bytes)
   val bankV3Address = Pay2SAddress(bankV3Tree)
 
+  val updatedBankTreeHash = bankV2TreeHash
+  val updatedBankAddress = bankV2Address
+
   def bankV2DeploymentRequest(): String = {
     val zero = Base16.encode(ValueSerializer.serialize(LongConstant(0L)))
     s"""
@@ -533,7 +536,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
 
     val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
     val zero = serializeValue(LongConstant(0L))
-    val encodedBankV2TreeHash = serializeValue(ByteArrayConstant(bankV3TreeHash))
+    val encodedUpdatedBankTreeHash = serializeValue(ByteArrayConstant(Base16.decode(updatedBankTreeHash).get))
 
     s"""
        |  [
@@ -550,7 +553,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |        "R4": "$voterPubKey",
        |        "R5": "$zero",
        |        "R6": "$updateBoxId",
-       |        "R7": "$encodedBankV2TreeHash"
+       |        "R7": "$encodedUpdatedBankTreeHash"
        |      }
        |    }
        |  ]
@@ -594,7 +597,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |      ]
       |    },
       |    {
-      |      "address": "${Pay2SAddress(bankV3Tree)}",
+      |      "address": "${updatedBankAddress}",
       |      "value": ${bankInput.value},
       |      "assets": [
       |        {
@@ -613,8 +616,8 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |      "registers": {
       |        "R4": "${serializeValue(bankInput.additionalRegisters(R4))}",
       |        "R5": "${serializeValue(bankInput.additionalRegisters(R5))}",
-      |        "R6": "${serializeValue(IntConstant(0))}",
-      |        "R7": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}"
+      |        "R6_COMMENTED_OUT": "${serializeValue(IntConstant(0))}",
+      |        "R7_COMMENTED_OUT": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}"
       |      }
       |    },
       |    {
@@ -666,7 +669,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |""".stripMargin
   }
 
-  println("Bank V3 tree hash: " + Base16.encode(bankV3TreeHash))
+  println("Updated bank tree hash: " + updatedBankTreeHash)
   println("Bank V2 address: " + bankV2Address)
   println("Ballot address: " + ballotAddress)
   println("Bank update address: " + bankUpdateAddress)
