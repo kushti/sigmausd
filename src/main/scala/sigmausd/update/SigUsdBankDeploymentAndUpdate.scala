@@ -10,7 +10,7 @@ import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
 import sigmausd.ScanUtils
-import sigmausd.update.TestnetPoolV1Deployment.serializeValue
+import sigmausd.update.TestnetPoolV1DeploymentAndUpdate.serializeValue
 
 object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with SubstitutionUtils {
 

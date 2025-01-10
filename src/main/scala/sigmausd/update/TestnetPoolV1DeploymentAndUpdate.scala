@@ -11,7 +11,7 @@ import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilde
 import sigmastate.serialization.ValueSerializer
 
 
-object TestnetPoolV1Deployment extends App with SubstitutionUtils {
+object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   override val mode = testnetIndex // mainnet mode
 
@@ -97,7 +97,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
       |    }
       |""".stripMargin
 
-  val epochPreparationScript =
+  def epochPreparationScript(poolUpdateNft: String): String =
     s"""
       |  {
       |      // This box:
@@ -109,7 +109,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
       |
       |      // Base-64 version of the update NFT 720978c041239e7d6eb249d801f380557126f6324e12c5ba9172d820be2e1dde
       |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      |      val updateNFT = fromBase16("${subst("poolUpdateNft")}")
+      |      val updateNFT = fromBase16("$poolUpdateNft")
       |
       |      val canStartEpoch = HEIGHT > SELF.R5[Int].get - 4 // livePeriod = 4 blocks
       |      val epochNotOver = HEIGHT < SELF.R5[Int].get
@@ -341,7 +341,7 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
   println("Live epoch tree hash: " + liveEpochTreeHash)
   val liveEpochAddress = Pay2SAddress(liveEpochTree)
 
-  val epochPreparationTree = compile(epochPreparationScript)
+  val epochPreparationTree = compile(epochPreparationScript(subst("poolUpdateNft")))
   val epochPreparationTreeHash = Base16.encode(Blake2b256.hash(epochPreparationTree.bytes))
   val epochPreparationAddress = Pay2SAddress(epochPreparationTree)
 
@@ -354,15 +354,11 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
   val updateTree = compile(updateScript)
   val updateAddress = Pay2SAddress(updateTree)
 
-  val updateTreePreV2 = compile(updateScriptPreV2)
-  val updateAddressPreV2 = Pay2SAddress(updateTreePreV2)
-
   println("Live epoch address: " + liveEpochAddress)
   println("Epoch preparation address: " + epochPreparationAddress)
   println("Pool deposit address: " + poolDepositAddress)
   println("Datapoint address: " + datapointAddress)
   println("Pool update address: " + updateAddress)
-  println("Pool update address pre V2: " + updateAddressPreV2)
 
   val oracleTokenId = if(mode == mainnetIndex){
     substitutionMap("oracleTokenId")._1
@@ -439,6 +435,30 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
        |""".stripMargin
   }
 
+
+  println("Epoch Preparation deployment request: ")
+  println(epochPreparationDeploymentRequest())
+
+  println("------------------------------")
+  println("Datapoint deployment requests: ")
+  println(datapointContractDeploymentRequest("3WvjmwdM9Lupn7fXPMB2uojweHwQQiLzdLSo1XRo3tgVCoBfL4ny"))
+  println(datapointContractDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+
+  println("------------------------------")
+  println("Pool update deployment request: ")
+  println(poolUpdateDeploymentRequest())
+
+  println("=================Pool v1 update data: ================================")
+  val updateTreePreV2 = compile(updateScriptPreV2)
+  val updateAddressPreV2 = Pay2SAddress(updateTreePreV2)
+  println("Pool update address pre V2: " + updateAddressPreV2)
+
+  val epochPreparationPreV2Tree = compile(epochPreparationScript(subst("poolUpdatePreV2Nft")))
+  val epochPreparationTreePreV2Hash = Base16.encode(Blake2b256.hash(epochPreparationPreV2Tree.bytes))
+  val epochPreparationPreV2Address = Pay2SAddress(epochPreparationPreV2Tree)
+
+  println("Epoch preparation address pre V2: " + epochPreparationPreV2Address)
+
   def poolUpdatePreV2DeploymentRequest(): String = {
     s"""
        |  [
@@ -456,15 +476,8 @@ object TestnetPoolV1Deployment extends App with SubstitutionUtils {
        |""".stripMargin
   }
 
-  println("Epoch Preparation deployment request: ")
-  println(epochPreparationDeploymentRequest())
   println("------------------------------")
-  println("Datapoint deployment requests: ")
-  println(datapointContractDeploymentRequest("3WvjmwdM9Lupn7fXPMB2uojweHwQQiLzdLSo1XRo3tgVCoBfL4ny"))
-  println(datapointContractDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
-  println("------------------------------")
-  println("Pool update deployment request: ")
-  println(poolUpdateDeploymentRequest())
   println("Pool update PreV2 deployment request: ")
   println(poolUpdatePreV2DeploymentRequest())
+
 }
