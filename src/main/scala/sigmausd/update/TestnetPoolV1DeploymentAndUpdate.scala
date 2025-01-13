@@ -9,16 +9,30 @@ import sigmastate.Values.{ByteArrayConstant, ErgoTree, EvaluatedValue, GroupElem
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
+import sigmausd.update.SigUsdBankDeploymentAndUpdate.{ballotAddress, ballotScript, compile, eae, fetchSingleBox, mode, subst, updatedBankTreeHash, voteForUpdateDeploymentRequest}
 
 
 object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   override val mode = testnetIndex // mainnet mode
 
+  val serverUrl: String = if (mode == mainnetIndex) {
+    null
+  } else {
+    "http://127.0.0.1:9053"
+  }
+
+
   val networkPrefix = if(mode == mainnetIndex) {
     ErgoAddressEncoder.MainnetNetworkPrefix
   } else {
     ErgoAddressEncoder.TestnetNetworkPrefix
+  }
+
+  val updateBoxScanId: Int = if (mode == mainnetIndex) {
+    0 // todo : set
+  } else {
+    0  // todo : set
   }
 
   implicit val eae = new ErgoAddressEncoder(networkPrefix)
@@ -214,6 +228,40 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
       |      ) && proveDlog(pubKey)
       |    }
       |""".stripMargin
+
+  def ballotScript(poolUpdateNft: String): String =
+    s"""
+       | { // This box (ballot box):
+       |      // R4 the group element of the owner of the ballot token [GroupElement]
+       |      // R5 dummy Int due to AOTC non-lazy evaluation (since pool box has Int at R5). Due to the line marked ****
+       |      // R6 the box id of the update box [Coll[Byte]]
+       |      // R7 the value voted for [Coll[Byte]]
+       |
+       |      // Base-64 version of the update NFT 720978c041239e7d6eb249d801f380557126f6324e12c5ba9172d820be2e1dde
+       |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
+       |      val updateNFT = fromBase64("$poolUpdateNft")
+       |
+       |      val pubKey = SELF.R4[GroupElement].get
+       |
+       |      val index = INPUTS.indexOf(SELF, 0)
+       |
+       |      val output = OUTPUTS(index)
+       |
+       |      val isBasicCopy = output.R4[GroupElement].get == pubKey &&
+       |                        output.propositionBytes == SELF.propositionBytes &&
+       |                        output.tokens == SELF.tokens &&
+       |                        output.value >= 10000000 // minStorageRent
+       |
+       |      sigmaProp(
+       |        isBasicCopy && (
+       |          proveDlog(pubKey) || (
+       |             INPUTS(0).tokens(0)._1 == updateNFT &&
+       |             output.value >= SELF.value
+       |          )
+       |        )
+       |      )
+       |    }
+       |""".stripMargin
 
   def updateScript =
     s"""
@@ -457,6 +505,41 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   val epochPreparationTreePreV2Hash = Base16.encode(Blake2b256.hash(epochPreparationPreV2Tree.bytes))
   val epochPreparationPreV2Address = Pay2SAddress(epochPreparationPreV2Tree)
 
+  def voteForPreV2UpdateDeploymentRequest(voterAddress: String): String = {
+
+    val ballotTree = compile(ballotScript(subst("poolUpdateNft")))
+    val ballotAddress = Pay2SAddress(ballotTree)
+
+    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
+    val updateBoxId = serializeValue(ByteArrayConstant(updateBox.get.id))
+
+    val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
+    val zero = serializeValue(LongConstant(0L))
+    val encodedEpochPreparationTreeHash = serializeValue(ByteArrayConstant(Base16.decode(epochPreparationTreePreV2Hash).get))
+
+    s"""
+       |  [
+       |    {
+       |      "address": "$ballotAddress",
+       |      "value": 10000000000,
+       |      "assets": [
+       |        {
+       |          "tokenId": "${subst("bankBallotTokenId")}",
+       |          "amount": 1
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "$voterPubKey",
+       |        "R5": "$zero",
+       |        "R6": "$updateBoxId",
+       |        "R7": "$encodedEpochPreparationTreeHash"
+       |      }
+       |    }
+       |  ]
+       |""".stripMargin
+  }
+
+
   println("Epoch preparation address pre V2: " + epochPreparationPreV2Address)
 
   def poolUpdatePreV2DeploymentRequest(): String = {
@@ -475,6 +558,16 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |  ]
        |""".stripMargin
   }
+
+
+  println("Vote for pool update to preV2 deployment requests: ")
+
+  println("kushti: ")
+  println(voteForUpdateDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+
+  println("Michael: ")
+  println(voteForUpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
+
 
   println("------------------------------")
   println("Pool update PreV2 deployment request: ")
