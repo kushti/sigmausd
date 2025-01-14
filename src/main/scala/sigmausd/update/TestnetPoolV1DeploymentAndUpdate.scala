@@ -9,7 +9,7 @@ import sigmastate.Values.{ByteArrayConstant, ErgoTree, EvaluatedValue, GroupElem
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
-import sigmausd.update.SigUsdBankDeploymentAndUpdate.{ballotAddress, ballotScript, compile, eae, fetchSingleBox, mode, subst, updatedBankTreeHash, voteForUpdateDeploymentRequest}
+import sigmausd.update.SigUsdBankDeploymentAndUpdate.{fetchSingleBox, voteForUpdateDeploymentRequest}
 
 
 object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
@@ -559,6 +559,9 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |""".stripMargin
   }
 
+  println("------------------------------")
+  println("Pool update PreV2 deployment request: ")
+  println(poolUpdatePreV2DeploymentRequest())
 
   println("Vote for pool update to preV2 deployment requests: ")
 
@@ -567,10 +570,5 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   println("Michael: ")
   println(voteForUpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
-
-
-  println("------------------------------")
-  println("Pool update PreV2 deployment request: ")
-  println(poolUpdatePreV2DeploymentRequest())
 
 }
