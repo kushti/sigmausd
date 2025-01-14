@@ -1,15 +1,16 @@
 package sigmausd.update
 
+import org.ergoplatform.ErgoBox.{R4, R5}
 import org.ergoplatform.kiosk.ergo.KioskType
 import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
 import sigmastate.SType
-import sigmastate.Values.{ByteArrayConstant, ErgoTree, EvaluatedValue, GroupElementConstant, LongConstant}
+import sigmastate.Values.{ByteArrayConstant, ErgoTree, EvaluatedValue, GroupElementConstant, IntConstant, LongConstant, Tuple}
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
-import sigmausd.update.SigUsdBankDeploymentAndUpdate.{fetchSingleBox, voteForUpdateDeploymentRequest}
+import sigmausd.update.SigUsdBankDeploymentAndUpdate.{fetchScanBoxes, fetchSingleBox}
 
 
 object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
@@ -22,7 +23,6 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
     "http://127.0.0.1:9053"
   }
 
-
   val networkPrefix = if(mode == mainnetIndex) {
     ErgoAddressEncoder.MainnetNetworkPrefix
   } else {
@@ -33,6 +33,18 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
     0 // todo : set
   } else {
     0  // todo : set
+  }
+
+  val poolBoxScanId: Int = if (mode == mainnetIndex) {
+    0 // todo : set
+  } else {
+    29
+  }
+
+  val ballotBoxScanId: Int = if (mode == mainnetIndex) {
+    0 // todo : set
+  } else {
+    30
   }
 
   implicit val eae = new ErgoAddressEncoder(networkPrefix)
@@ -559,6 +571,106 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |""".stripMargin
   }
 
+
+  def updateDeploymentRequest(): String = {
+    val epochPrepBox = fetchSingleBox(serverUrl, poolBoxScanId, includeUnconfirmed = false)
+    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
+    val ballotBoxes = fetchScanBoxes(serverUrl, ballotBoxScanId, includeUnconfirmed = false)
+    // inputs:
+    // #0 - update
+    // #1 - epoch prep
+    // #2,3,4 - votes
+    // #5 - fee provider
+    // outputs:
+    // #0 - update
+    // #1 - epoch prep
+    // #2,3,4 - votes
+    // #5 - fee
+
+    val updateInput = updateBox.get
+    val poolInput = epochPrepBox.get
+
+    val feeProviderInput = "80f591a5250008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a99fd75b000033dc0447ff0e62e3eec3b8c5a2419db54fe131d3e6087310386cc0a0d2b54b5800"
+
+    val inputs = (Seq(updateInput, poolInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
+    val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
+
+    s"""
+       |{
+       |  "requests": [
+       |    {
+       |      "address": "${Pay2SAddress(updateInput.ergoTree)}",
+       |      "value": ${updateInput.value + 10000000000L},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(updateInput.additionalTokens(0)._1.toArray)}",
+       |          "amount": ${updateInput.additionalTokens(0)._2}
+       |        }
+       |      ]
+       |    },
+       |    {
+       |      "address": "${epochPreparationPreV2Address}",
+       |      "value": ${poolInput.value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(poolInput.additionalTokens(0)._1.toArray)}",
+       |          "amount": ${poolInput.additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(poolInput.additionalRegisters(R4))}",
+       |        "R5": "${serializeValue(poolInput.additionalRegisters(R5))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(0).ergoTree)}",
+       |      "value": ${ballotBoxes(0).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(0).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(0).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(0).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(1).ergoTree)}",
+       |      "value": ${ballotBoxes(1).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(1).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(1).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(1).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(2).ergoTree)}",
+       |      "value": ${ballotBoxes(2).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(2).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(2).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(2).additionalRegisters(R4))}"
+       |      }
+       |    }
+       |  ],
+       |  "fee": 10000000,
+       |  "inputsRaw": [
+       |    $inputsString
+       |  ],
+       |  "dataInputsRaw": []
+       |}
+       |""".stripMargin
+  }
+
   println("------------------------------")
   println("Pool update PreV2 deployment request: ")
   println(poolUpdatePreV2DeploymentRequest())
@@ -566,9 +678,11 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   println("Vote for pool update to preV2 deployment requests: ")
 
   println("kushti: ")
-  println(voteForUpdateDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+  println(voteForPreV2UpdateDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
 
   println("Michael: ")
-  println(voteForUpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
+  println(voteForPreV2UpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
 
+  println("Pool update (for /wallet/transaction/send ): ")
+  println(updateDeploymentRequest())
 }
