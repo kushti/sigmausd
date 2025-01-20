@@ -6,7 +6,7 @@ import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import scorex.crypto.hash.Blake2b256
 import scorex.util.encode.Base16
 import sigmastate.SType
-import sigmastate.Values.{ByteArrayConstant, ErgoTree, EvaluatedValue, GroupElementConstant, IntConstant, LongConstant, Tuple}
+import sigmastate.Values.{ByteArrayConstant, ErgoTree, EvaluatedValue, GroupElementConstant, LongConstant}
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.{CompilerSettings, SigmaCompiler, TransformingSigmaBuilder}
 import sigmastate.serialization.ValueSerializer
@@ -16,6 +16,12 @@ import sigmausd.update.SigUsdBankDeploymentAndUpdate.{fetchScanBoxes, fetchSingl
 object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   override val mode = testnetIndex // mainnet mode
+
+  val minVotes = if (mode == mainnetIndex) {
+    8
+  } else {
+    2
+  }
 
   val serverUrl: String = if (mode == mainnetIndex) {
     null
@@ -275,7 +281,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |    }
        |""".stripMargin
 
-  def updateScript =
+  def updateScript(minVotes: Int): String =
     s"""
       | { // This box (update box):
       |      // Registers empty
@@ -337,11 +343,12 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
       |
       |      val votesCount = ballotBoxes.fold(0L, {(accum: Long, b: Box) => accum + b.tokens(0)._2})
       |
-      |      sigmaProp(validPoolIn && validPoolOut && validUpdateIn && validUpdateOut && votesCount >= 8) // minVotes = 8
+      |      // minVotes = 8 for mainnet, 2 for testnet
+      |      sigmaProp(validPoolIn && validPoolOut && validUpdateIn && validUpdateOut && votesCount >= ${minVotes})
       |    }
       |""".stripMargin
 
-  def updateScriptPreV2 =
+  def updateScriptPreV2(minVotes: Int) =
     s"""
       | { // This box (update box):
       |      // Registers empty
@@ -411,7 +418,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   val datapointTree = compile(datapointScript)
   val datapointAddress = Pay2SAddress(datapointTree)
 
-  val updateTree = compile(updateScript)
+  val updateTree = compile(updateScript(minVotes))
   val updateAddress = Pay2SAddress(updateTree)
 
   println("Live epoch address: " + liveEpochAddress)
@@ -509,7 +516,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   println(poolUpdateDeploymentRequest())
 
   println("=================Pool v1 update data: ================================")
-  val updateTreePreV2 = compile(updateScriptPreV2)
+  val updateTreePreV2 = compile(updateScriptPreV2(minVotes))
   val updateAddressPreV2 = Pay2SAddress(updateTreePreV2)
   println("Pool update address pre V2: " + updateAddressPreV2)
 
@@ -590,6 +597,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
     val updateInput = updateBox.get
     val poolInput = epochPrepBox.get
 
+    // todo: provide real value
     val feeProviderInput = "80f591a5250008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a99fd75b000033dc0447ff0e62e3eec3b8c5a2419db54fe131d3e6087310386cc0a0d2b54b5800"
 
     val inputs = (Seq(updateInput, poolInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
@@ -683,6 +691,6 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   println("Michael: ")
   println(voteForPreV2UpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
 
-  println("Pool update (for /wallet/transaction/send ): ")
+  println("Pool update from V1 to preV2 (for /wallet/transaction/send ): ")
   println(updateDeploymentRequest())
 }
