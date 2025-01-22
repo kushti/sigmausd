@@ -38,7 +38,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    0  // todo : set
+    16  // todo : set
   }
 
   val poolBoxScanId: Int = if (mode == mainnetIndex) {
@@ -46,7 +46,6 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   } else {
     29
   }
-
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
@@ -399,7 +398,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
       |
       |      val votesCount = ballotBoxes.fold(0L, {(accum: Long, b: Box) => accum + b.tokens(0)._2})
       |
-      |      sigmaProp(validPoolIn && validPoolOut && validUpdateIn && validUpdateOut && votesCount >= 8) // minVotes = 8
+      |      sigmaProp(validPoolIn && validPoolOut && validUpdateIn && validUpdateOut && votesCount >= ${minVotes})
       |    }
       |""".stripMargin
 
