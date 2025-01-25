@@ -44,12 +44,12 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   val poolBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    29
+    11  // epoch preparation
   }
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    30
+    17
   }
 
   implicit val eae = new ErgoAddressEncoder(networkPrefix)
@@ -542,7 +542,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |      "value": 10000000000,
        |      "assets": [
        |        {
-       |          "tokenId": "${subst("bankBallotTokenId")}",
+       |          "tokenId": "${subst("ballotToken")}",
        |          "amount": 1
        |        }
        |      ],
@@ -597,7 +597,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
     val poolInput = epochPrepBox.get
 
     // todo: provide real value
-    val feeProviderInput = "80f591a5250008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a99fd75b000033dc0447ff0e62e3eec3b8c5a2419db54fe131d3e6087310386cc0a0d2b54b5800"
+    val feeProviderInput = "80ade2040008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a9ace2610000df9489e3cee1fe9d23436cee1ca8ac5f74dc8f3e46aedaa074df538eb3cceb2700"
 
     val inputs = (Seq(updateInput, poolInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
     val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
@@ -607,7 +607,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |  "requests": [
        |    {
        |      "address": "${Pay2SAddress(updateInput.ergoTree)}",
-       |      "value": ${updateInput.value + 10000000000L},
+       |      "value": ${updateInput.value},
        |      "assets": [
        |        {
        |          "tokenId": "${Base16.encode(updateInput.additionalTokens(0)._1.toArray)}",
@@ -653,19 +653,6 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |      ],
        |      "registers": {
        |        "R4": "${serializeValue(ballotBoxes(1).additionalRegisters(R4))}"
-       |      }
-       |    },
-       |    {
-       |      "address": "${Pay2SAddress(ballotBoxes(2).ergoTree)}",
-       |      "value": ${ballotBoxes(2).value},
-       |      "assets": [
-       |        {
-       |          "tokenId": "${Base16.encode(ballotBoxes(2).additionalTokens(0)._1.toArray)}",
-       |          "amount": ${ballotBoxes(2).additionalTokens(0)._2}
-       |        }
-       |      ],
-       |      "registers": {
-       |        "R4": "${serializeValue(ballotBoxes(2).additionalRegisters(R4))}"
        |      }
        |    }
        |  ],
