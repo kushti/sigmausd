@@ -1,6 +1,7 @@
 package sigmausd.update
 
 import org.ergoplatform.ErgoBox.{R4, R5}
+import org.ergoplatform.core.bytesToId
 import org.ergoplatform.kiosk.ergo.KioskType
 import org.ergoplatform.{ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import scorex.crypto.hash.Blake2b256
@@ -256,7 +257,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |
        |      // Base-64 version of the update NFT 720978c041239e7d6eb249d801f380557126f6324e12c5ba9172d820be2e1dde
        |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-       |      val updateNFT = fromBase64("$poolUpdateNft")
+       |      val updateNFT = fromBase16("$poolUpdateNft")
        |
        |      val pubKey = SELF.R4[GroupElement].get
        |
@@ -297,7 +298,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
       |
       |      // Base-64 version of the ballot token ID 053fefab5477138b760bc7ae666c3e2b324d5ae937a13605cb766ec5222e5518
       |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      |      val ballotTokenId = fromBase64("${subst("ballotToken")}")
+      |      val ballotTokenId = fromBase16("${subst("ballotToken")}")
       |
       |      // collect and update in one step
       |      val updateBoxOut = OUTPUTS(0) // copy of this box is the 1st output
@@ -347,7 +348,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
       |    }
       |""".stripMargin
 
-  def updateScriptPreV2(minVotes: Int) =
+  def updateScriptPreV2(minVotes: Int): String =
     s"""
       | { // This box (update box):
       |      // Registers empty
@@ -360,11 +361,11 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
       |
       |      // Base-64 version of the pool NFT 011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f
       |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      |      val poolNFT = fromBase64("${subst("poolNft")}")
+      |      val poolNFT = fromBase16("${subst("poolNft")}")
       |
       |      // Base-64 version of the ballot token ID 053fefab5477138b760bc7ae666c3e2b324d5ae937a13605cb766ec5222e5518
       |      // Got via http://tomeko.net/online_tools/hex_to_base64.php
-      |      val ballotTokenId = fromBase64("${subst("ballotToken")}")
+      |      val ballotTokenId = fromBase16("${subst("ballotToken")}")
       |
       |      // collect and update in one step
       |      val updateBoxOut = OUTPUTS(0) // copy of this box is the 1st output
@@ -557,7 +558,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |""".stripMargin
   }
 
-
+  println("Epoch preparation tree hash pre V2: " + epochPreparationTreePreV2Hash)
   println("Epoch preparation address pre V2: " + epochPreparationPreV2Address)
 
   def poolUpdatePreV2DeploymentRequest(): String = {
@@ -595,6 +596,8 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
     val updateInput = updateBox.get
     val poolInput = epochPrepBox.get
+
+    println("update box id: " + bytesToId(updateBox.get.id))
 
     // todo: provide real value
     val feeProviderInput = "80ade2040008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a9ace2610000df9489e3cee1fe9d23436cee1ca8ac5f74dc8f3e46aedaa074df538eb3cceb2700"
