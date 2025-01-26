@@ -39,18 +39,19 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    16  // todo : set
+    24  // todo : set
   }
 
   val poolBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    11  // epoch preparation
+    18  // epoch preparation
   }
+
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    17
+    25
   }
 
   implicit val eae = new ErgoAddressEncoder(networkPrefix)
