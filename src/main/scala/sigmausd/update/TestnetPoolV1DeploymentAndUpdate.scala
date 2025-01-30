@@ -39,19 +39,19 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    24  // todo : set
+    18  // todo : set
   }
 
   val poolBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    18  // epoch preparation
+    11  // epoch preparation
   }
 
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    25
+    20
   }
 
   implicit val eae = new ErgoAddressEncoder(networkPrefix)
@@ -601,7 +601,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
     println("update box id: " + bytesToId(updateBox.get.id))
 
     // todo: provide real value
-    val feeProviderInput = "80ade2040008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a9ace2610000df9489e3cee1fe9d23436cee1ca8ac5f74dc8f3e46aedaa074df538eb3cceb2700"
+    val feeProviderInput = "80ade2040008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a9c2ee6100009e764c48b4e9cf639c5b55313502359c03761edafd42bddd054aa28deea9fa2100"
 
     val inputs = (Seq(updateInput, poolInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
     val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
