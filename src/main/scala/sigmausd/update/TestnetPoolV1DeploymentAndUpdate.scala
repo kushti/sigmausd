@@ -14,6 +14,10 @@ import sigmastate.serialization.ValueSerializer
 import sigmausd.update.SigUsdBankDeploymentAndUpdate.{fetchScanBoxes, fetchSingleBox}
 
 
+// mainnet deployment plan
+// rescan to find update box and ballots
+// issue fee box (with 10M nanoERG)
+
 object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   override val mode = testnetIndex // mainnet mode
@@ -30,7 +34,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
     "http://127.0.0.1:9053"
   }
 
-  val networkPrefix = if(mode == mainnetIndex) {
+  val networkPrefix = if (mode == mainnetIndex) {
     ErgoAddressEncoder.MainnetNetworkPrefix
   } else {
     ErgoAddressEncoder.TestnetNetworkPrefix
@@ -39,7 +43,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
     0 // todo : set
   } else {
-    18  // todo : set
+    18
   }
 
   val poolBoxScanId: Int = if (mode == mainnetIndex) {
@@ -509,7 +513,6 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   println("------------------------------")
   println("Datapoint deployment requests: ")
-  println(datapointContractDeploymentRequest("3WvjmwdM9Lupn7fXPMB2uojweHwQQiLzdLSo1XRo3tgVCoBfL4ny"))
   println(datapointContractDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
 
   println("------------------------------")
@@ -676,10 +679,12 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   println("Vote for pool update to preV2 deployment requests: ")
 
   println("kushti: ")
-  println(voteForPreV2UpdateDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
-
-  println("Michael: ")
-  println(voteForPreV2UpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
+  val voterAddress: String = if (mode == mainnetIndex) {
+    ???
+  } else {
+    "3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"
+  }
+  println(voteForPreV2UpdateDeploymentRequest(voterAddress))
 
   println("Pool update from V1 to preV2 (for /wallet/transaction/send ): ")
   println(updateDeploymentRequest())
