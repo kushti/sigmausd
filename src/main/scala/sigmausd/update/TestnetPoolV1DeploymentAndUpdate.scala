@@ -20,7 +20,7 @@ import sigmausd.update.SigUsdBankDeploymentAndUpdate.{fetchScanBoxes, fetchSingl
 
 object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
-  override val mode = testnetIndex // mainnet mode
+  override val mode = mainnetIndex // mainnet mode
 
   val minVotes = if (mode == mainnetIndex) {
     8
@@ -29,7 +29,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   }
 
   val serverUrl: String = if (mode == mainnetIndex) {
-    null
+    "http://127.0.0.1:9053"
   } else {
     "http://127.0.0.1:9053"
   }
@@ -41,13 +41,13 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   }
 
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
-    0 // todo : set
+    26
   } else {
     18
   }
 
   val poolBoxScanId: Int = if (mode == mainnetIndex) {
-    0 // todo : set
+    11  // epoch preparation
   } else {
     11  // epoch preparation
   }
@@ -513,7 +513,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   println("------------------------------")
   println("Datapoint deployment requests: ")
-  println(datapointContractDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+//  println(datapointContractDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
 
   println("------------------------------")
   println("Pool update deployment request: ")
@@ -680,7 +680,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   println("kushti: ")
   val voterAddress: String = if (mode == mainnetIndex) {
-    ???
+    "9gZLYYtsC6EUhj4SK2XySR9duVorTcQxHK8oE4ZTdUEpReTXcAK"
   } else {
     "3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"
   }

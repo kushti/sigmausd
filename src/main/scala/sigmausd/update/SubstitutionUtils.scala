@@ -14,9 +14,8 @@ trait SubstitutionUtils {
     "minOracleBoxes" -> ("4", "1"),
     "poolNft" -> ("011d3364de07e5a26f0c4eef0852cddb387039a921b7154ef3cab22c6eda887f", "0e42bac1f979edcc1e019aa33e4eedd783967ef4ed6bbb4375ee069ac126a076"),
     "poolUpdateNft" -> ("720978c041239e7d6eb249d801f380557126f6324e12c5ba9172d820be2e1dde", "0fc3f2ca467f89f5aeb173f01354ca42a6692e30df352aa3e88116765380044e"),
-     // todo: change poolUpdatePreV2Nft for the mainnet
-    "poolUpdatePreV2Nft" -> ("", "111e55ccba2bc64e36c4dbbd445bf1bfb6370dd89f0f6ec839daf9a0a200b516"),
-    "ballotToken" -> ("", "1317f4d9eea21dce0eeeb0fbfb6c34120178af4f76800c1c1aa35662862d7320"),
+    "poolUpdatePreV2Nft" -> ("d332043f73cfc772ee5e263e739d3b5cf7480431b0c86fc2bbb2c0b0865b2443", "111e55ccba2bc64e36c4dbbd445bf1bfb6370dd89f0f6ec839daf9a0a200b516"),
+    "ballotToken" -> ("053fefab5477138b760bc7ae666c3e2b324d5ae937a13605cb766ec5222e5518", "1317f4d9eea21dce0eeeb0fbfb6c34120178af4f76800c1c1aa35662862d7320"),
     "liveEpochTreeHash" -> ("77dffd47b690caa52fe13345aaf64ecdf7d55f2e7e3496e8206311f491aa46cd", "a063359380dc1193edcd81af7425b99e50f3c9098be128440a6aa4c41c93aeba"),
 
     // bank related tokens
