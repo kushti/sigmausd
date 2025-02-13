@@ -53,7 +53,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
   }
 
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
-    0 // todo : set
+    28
   } else {
     20
   }
@@ -603,8 +603,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
     println("update box id: " + bytesToId(updateBox.get.id))
 
-    // todo: provide real value
-    val feeProviderInput = "80ade2040008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a9c2ee6100009e764c48b4e9cf639c5b55313502359c03761edafd42bddd054aa28deea9fa2100"
+    val feeProviderInput = "80ade2040008cd02725e8878d5198ca7f5853dddf35560ddab05ab0a26adae7e664b84162c9962e5bf935900001fddc0654b0c693e6b56753c6e735230814c0ac8948b76ab9a0f8b1b5f78621800"
 
     val inputs = (Seq(updateInput, poolInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
     val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
@@ -661,6 +660,84 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
        |      "registers": {
        |        "R4": "${serializeValue(ballotBoxes(1).additionalRegisters(R4))}"
        |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(2).ergoTree)}",
+       |      "value": ${ballotBoxes(2).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(2).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(2).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(2).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(3).ergoTree)}",
+       |      "value": ${ballotBoxes(3).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(3).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(3).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(3).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(4).ergoTree)}",
+       |      "value": ${ballotBoxes(4).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(4).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(4).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(4).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(5).ergoTree)}",
+       |      "value": ${ballotBoxes(5).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(5).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(5).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(5).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(6).ergoTree)}",
+       |      "value": ${ballotBoxes(6).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(6).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(6).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(6).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(7).ergoTree)}",
+       |      "value": ${ballotBoxes(7).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(7).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(7).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(7).additionalRegisters(R4))}"
+       |      }
        |    }
        |  ],
        |  "fee": 10000000,
@@ -680,7 +757,7 @@ object TestnetPoolV1DeploymentAndUpdate extends App with SubstitutionUtils {
 
   println("kushti: ")
   val voterAddress: String = if (mode == mainnetIndex) {
-    "9gZLYYtsC6EUhj4SK2XySR9duVorTcQxHK8oE4ZTdUEpReTXcAK"
+    "9fPRvaMYzBPotu6NGvZn4A6N4J2jDmRGs4Zwc9UhFFeSXgRJ8pS"
   } else {
     "3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"
   }
