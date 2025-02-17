@@ -15,7 +15,7 @@ import sigmausd.update.TestnetPoolV1DeploymentAndUpdate.serializeValue
 object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with SubstitutionUtils {
 
   override val mode = testnetIndex
-  override val substitutionMap = super.substitutionMap ++ Map.empty
+  override val substitutionMap = super.substitutionMap
 
   val networkPrefix = if(mode == mainnetIndex) {
     ErgoAddressEncoder.MainnetNetworkPrefix
@@ -24,7 +24,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   }
 
   val serverUrl: String = if (mode == mainnetIndex) {
-    null
+    "http://127.0.0.1:9053"
   } else {
     "http://127.0.0.1:9053"
   }
@@ -530,7 +530,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |""".stripMargin
   }
 
-  def voteForUpdateDeploymentRequest(voterAddress: String): String = {
+  def voteForUpdateToV3Request(voterAddress: String): String = {
     val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
     val updateBoxId = serializeValue(ByteArrayConstant(updateBox.get.id))
 
@@ -560,7 +560,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |""".stripMargin
   }
 
-  def updateDeploymentRequest(): String = {
+  def updatetoV3DeploymentRequest(): String = {
     val bankBox = fetchSingleBox(serverUrl, bankBoxScanId, includeUnconfirmed = false)
     val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
     val ballotBoxes = fetchScanBoxes(serverUrl, ballotBoxScanId, includeUnconfirmed = false)
@@ -669,6 +669,146 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |""".stripMargin
   }
 
+  def voteForUpdateToTheSameVersionRequest(voterAddress: String): String = {
+    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
+    val updateBoxId = serializeValue(ByteArrayConstant(updateBox.get.id))
+
+    val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
+    val zero = serializeValue(LongConstant(0L))
+    val encodedUpdatedBankTreeHash = serializeValue(ByteArrayConstant(Base16.decode(updatedBankTreeHash).get))
+
+    s"""
+       |  [
+       |    {
+       |      "address": "$ballotAddress",
+       |      "value": 10000000000,
+       |      "assets": [
+       |        {
+       |          "tokenId": "${subst("bankBallotTokenId")}",
+       |          "amount": 1
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "$voterPubKey",
+       |        "R5": "$zero",
+       |        "R6": "$updateBoxId",
+       |        "R7": "$encodedUpdatedBankTreeHash"
+       |      }
+       |    }
+       |  ]
+       |""".stripMargin
+  }
+
+  def updateToTheSameVersionDeploymentRequest(): String = {
+    val bankBox = fetchSingleBox(serverUrl, bankBoxScanId, includeUnconfirmed = false)
+    val updateBox = fetchSingleBox(serverUrl, updateBoxScanId, includeUnconfirmed = false)
+    val ballotBoxes = fetchScanBoxes(serverUrl, ballotBoxScanId, includeUnconfirmed = false)
+    // inputs:
+    // #0 - update
+    // #1 - bank
+    // #2,3,4 - votes
+    // #5 - fee provider
+    // outputs:
+    // #0 - update
+    // #1 - bank
+    // #2,3,4 - votes
+    // #5 - fee
+
+    val updateInput = updateBox.get
+    val bankInput = bankBox.get
+
+    val feeProviderInput = "80f591a5250008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a99fd75b000033dc0447ff0e62e3eec3b8c5a2419db54fe131d3e6087310386cc0a0d2b54b5800"
+
+    val inputs = (Seq(updateInput, bankInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
+    val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
+
+    s"""
+       |{
+       |  "requests": [
+       |    {
+       |      "address": "${Pay2SAddress(updateInput.ergoTree)}",
+       |      "value": ${updateInput.value + 10000000000L},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(updateInput.additionalTokens(0)._1.toArray)}",
+       |          "amount": ${updateInput.additionalTokens(0)._2}
+       |        }
+       |      ]
+       |    },
+       |    {
+       |      "address": "${updatedBankAddress}",
+       |      "value": ${bankInput.value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(bankInput.additionalTokens(0)._1.toArray)}",
+       |          "amount": ${bankInput.additionalTokens(0)._2}
+       |        },
+       |        {
+       |          "tokenId": "${Base16.encode(bankInput.additionalTokens(1)._1.toArray)}",
+       |          "amount": ${bankInput.additionalTokens(1)._2}
+       |        },
+       |        {
+       |          "tokenId": "${Base16.encode(bankInput.additionalTokens(2)._1.toArray)}",
+       |          "amount": ${bankInput.additionalTokens(2)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(bankInput.additionalRegisters(R4))}",
+       |        "R5": "${serializeValue(bankInput.additionalRegisters(R5))}",
+       |        "R6_COMMENTED_OUT": "${serializeValue(IntConstant(0))}",
+       |        "R7_COMMENTED_OUT": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(0).ergoTree)}",
+       |      "value": ${ballotBoxes(0).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(0).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(0).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(0).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(1).ergoTree)}",
+       |      "value": ${ballotBoxes(1).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(1).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(1).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(1).additionalRegisters(R4))}"
+       |      }
+       |    },
+       |    {
+       |      "address": "${Pay2SAddress(ballotBoxes(2).ergoTree)}",
+       |      "value": ${ballotBoxes(2).value},
+       |      "assets": [
+       |        {
+       |          "tokenId": "${Base16.encode(ballotBoxes(2).additionalTokens(0)._1.toArray)}",
+       |          "amount": ${ballotBoxes(2).additionalTokens(0)._2}
+       |        }
+       |      ],
+       |      "registers": {
+       |        "R4": "${serializeValue(ballotBoxes(2).additionalRegisters(R4))}"
+       |      }
+       |    }
+       |  ],
+       |  "fee": 10000000,
+       |  "inputsRaw": [
+       |    $inputsString
+       |  ],
+       |  "dataInputsRaw": []
+       |}
+       |""".stripMargin
+  }
+
+
   println("Updated bank tree hash: " + updatedBankTreeHash)
   println("Bank V2 address: " + bankV2Address)
   println("Ballot address: " + ballotAddress)
@@ -678,14 +818,19 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   println(bankV2DeploymentRequest())
   println("Bank update deployment request: ")
   println(bankUpdateDeploymentRequest())
-  println("Vote for update deployment requests: ")
+
+  println("Vote for update to V3 deployment requests: ")
   println("kushti: ")
-  println(voteForUpdateDeploymentRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+  println(voteForUpdateToV3Request("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
 
-  println("Michael: ")
-  println(voteForUpdateDeploymentRequest("3Wvd1hML9DLxNJEbS1VuDuwgsZeNcyoBtyGqvheiQodFxpZBoz2b"))
+  println("Bank update to V3 (for /wallet/transaction/send ): ")
+  println(updatetoV3DeploymentRequest())
 
-  println("Bank update (for /wallet/transaction/send ): ")
-  println(updateDeploymentRequest())
+  println("Vote for update to the same version deployment requests: ")
+  println("kushti: ")
+  println(voteForUpdateToTheSameVersionRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+
+  println("Bank update to the same version (for /wallet/transaction/send ): ")
+  println(updateToTheSameVersionDeploymentRequest())
 
 }
