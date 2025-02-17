@@ -480,9 +480,6 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   val bankV3TreeHash = Blake2b256.hash(bankV3Tree.bytes)
   val bankV3Address = Pay2SAddress(bankV3Tree)
 
-  val updatedBankTreeHash = bankV2TreeHash
-  val updatedBankAddress = bankV2Address
-
   def bankV2DeploymentRequest(): String = {
     val zero = Base16.encode(ValueSerializer.serialize(LongConstant(0L)))
     s"""
@@ -536,7 +533,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
 
     val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
     val zero = serializeValue(LongConstant(0L))
-    val encodedUpdatedBankTreeHash = serializeValue(ByteArrayConstant(Base16.decode(updatedBankTreeHash).get))
+    val encodedUpdatedBankTreeHash = serializeValue(ByteArrayConstant(bankV3TreeHash))
 
     s"""
        |  [
@@ -597,7 +594,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |      ]
       |    },
       |    {
-      |      "address": "${updatedBankAddress}",
+      |      "address": "${Pay2SAddress(bankV3Tree)}",
       |      "value": ${bankInput.value},
       |      "assets": [
       |        {
@@ -616,8 +613,8 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
       |      "registers": {
       |        "R4": "${serializeValue(bankInput.additionalRegisters(R4))}",
       |        "R5": "${serializeValue(bankInput.additionalRegisters(R5))}",
-      |        "R6_COMMENTED_OUT": "${serializeValue(IntConstant(0))}",
-      |        "R7_COMMENTED_OUT": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}"
+      |        "R6": "${serializeValue(IntConstant(0))}",
+      |        "R7": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}"
       |      }
       |    },
       |    {
@@ -675,7 +672,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
 
     val voterPubKey = serializeValue(GroupElementConstant(eae.fromString(voterAddress).get.asInstanceOf[P2PKAddress].pubkey.value))
     val zero = serializeValue(LongConstant(0L))
-    val encodedUpdatedBankTreeHash = serializeValue(ByteArrayConstant(Base16.decode(updatedBankTreeHash).get))
+    val encodedUpdatedBankTreeHash = serializeValue(ByteArrayConstant(Base16.decode(bankV2TreeHash).get))
 
     s"""
        |  [
@@ -736,7 +733,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |      ]
        |    },
        |    {
-       |      "address": "${updatedBankAddress}",
+       |      "address": "${bankV2Address}",
        |      "value": ${bankInput.value},
        |      "assets": [
        |        {
@@ -809,7 +806,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   }
 
 
-  println("Updated bank tree hash: " + updatedBankTreeHash)
+  println("bankV2TreeHash: " + bankV2TreeHash)
   println("Bank V2 address: " + bankV2Address)
   println("Ballot address: " + ballotAddress)
   println("Bank update address: " + bankUpdateAddress)
