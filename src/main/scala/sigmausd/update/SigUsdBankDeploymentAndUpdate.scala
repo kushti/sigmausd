@@ -14,7 +14,8 @@ import sigmausd.update.TestnetPoolV1DeploymentAndUpdate.serializeValue
 
 object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with SubstitutionUtils {
 
-  override val mode = testnetIndex
+  override val mode = mainnetIndex
+
   override val substitutionMap = super.substitutionMap
 
   val networkPrefix = if(mode == mainnetIndex) {
@@ -26,27 +27,26 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   val serverUrl: String = if (mode == mainnetIndex) {
     "http://127.0.0.1:9053"
   } else {
-    "http://127.0.0.1:9053"
+    "http://127.0.0.1:9052"
   }
 
   val bankBoxScanId: Int = if (mode == mainnetIndex) {
-    0 // todo : set
+    62
   } else {
     29
   }
 
   val updateBoxScanId: Int = if (mode == mainnetIndex) {
-    0 // todo : set
+    60
   } else {
     30
   }
 
   val ballotBoxScanId: Int = if (mode == mainnetIndex) {
-    0 // todo : set
+    61
   } else {
     31
   }
-
 
   implicit val eae = new ErgoAddressEncoder(networkPrefix)
 
@@ -714,7 +714,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
     val updateInput = updateBox.get
     val bankInput = bankBox.get
 
-    val feeProviderInput = "80f591a5250008cd024cea00b0c06a80f49c233a8b25217a14c5be53df1bc04630caf3241ec2b145a99fd75b000033dc0447ff0e62e3eec3b8c5a2419db54fe131d3e6087310386cc0a0d2b54b5800"
+    val feeProviderInput = "80f591a5250008cd030c8f9c4dc08f3c006fa85a47c9156dedbede000a8b764c6e374fd097e873ba04fe865a000072885e3b32ee441e02daade027b8dff09e56b36ec9792207888978ec3a528a3900"
 
     val inputs = (Seq(updateInput, bankInput) ++ ballotBoxes).map(_.bytes).map(Base16.encode) ++ Seq(feeProviderInput)
     val inputsString = inputs.map(s => "\"" + s + "\"").mkString(", ")
@@ -751,9 +751,7 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
        |      ],
        |      "registers": {
        |        "R4": "${serializeValue(bankInput.additionalRegisters(R4))}",
-       |        "R5": "${serializeValue(bankInput.additionalRegisters(R5))}",
-       |        "R6_COMMENTED_OUT": "${serializeValue(IntConstant(0))}",
-       |        "R7_COMMENTED_OUT": "${serializeValue(Tuple(LongConstant(0), LongConstant(0)))}"
+       |        "R5": "${serializeValue(bankInput.additionalRegisters(R5))}"
        |      }
        |    },
        |    {
@@ -816,16 +814,30 @@ object SigUsdBankDeploymentAndUpdate extends App with ScanUtils with Substitutio
   println("Bank update deployment request: ")
   println(bankUpdateDeploymentRequest())
 
+  /*
   println("Vote for update to V3 deployment requests: ")
   println("kushti: ")
   println(voteForUpdateToV3Request("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
 
   println("Bank update to V3 (for /wallet/transaction/send ): ")
-  println(updatetoV3DeploymentRequest())
+  println(updatetoV3DeploymentRequest()) */
 
   println("Vote for update to the same version deployment requests: ")
-  println("kushti: ")
-  println(voteForUpdateToTheSameVersionRequest("3WwC5mGC717y3ztqRS7asAUoUdci8BBKDnJt98vxetHDUAMABLNd"))
+
+  println("kushti : ")
+  println(voteForUpdateToTheSameVersionRequest("9gZLYYtsC6EUhj4SK2XySR9duVorTcQxHK8oE4ZTdUEpReTXcAK"))
+
+  println("anon-real : ")
+  println(voteForUpdateToTheSameVersionRequest("9evruWoFfhTZ4q4Xc4whQK4bJMqMAF7z9YeygzLvCHMgR17Pt5n"))
+
+  println("anon2020s : ")
+  println(voteForUpdateToTheSameVersionRequest("9gNNJ3jTcg4RX7NCrKgdH4d326t4EL2jZeQLWpcev2po9fQ7U4g"))
+
+  println("Luivatra : ")
+  println(voteForUpdateToTheSameVersionRequest("9fdAEr7sEFVM7j8npt4eEMJ4bbENE9aLQmW332yCZaQ8GE6xLdk"))
+
+  println("mgpai : ")
+  println(voteForUpdateToTheSameVersionRequest("9g6mtrgWKuLaSHnwR8uusqHEUze16NW7rfo9xQvktHDkwEBr5gb"))
 
   println("Bank update to the same version (for /wallet/transaction/send ): ")
   println(updateToTheSameVersionDeploymentRequest())
